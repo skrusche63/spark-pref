@@ -63,6 +63,17 @@ case class ServiceResponse(
   service:String,task:String,data:Map[String,String],status:String
 )
 
+object Sources {
+
+  val FILE:String    = "FILE"
+  val ELASTIC:String = "ELASTIC" 
+  val JDBC:String    = "JDBC"    
+  val PIWIK:String   = "PIWIK"    
+  
+  private val sources = List(FILE,ELASTIC,JDBC,PIWIK)
+  def isSource(source:String):Boolean = sources.contains(source)
+  
+}
 
 object Serializer {
     
