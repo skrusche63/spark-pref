@@ -1,0 +1,57 @@
+<EventScores>
+  <EventScore>
+    <type>1</type>
+    <description>purchased</description>
+    <scores>100</scores>
+  </EventScore>
+  <EventScore>
+    <type>2</type>
+    <description>joined checkout</description>
+    <scores>85</scores>
+  </EventScore>
+  <EventScore>
+    <type>3</type>
+    <description>placed in shopping cart</description>
+    <scores>60</scores>
+  </EventScore>
+  <EventScore>
+    <type>4</type>
+    <description>placed in wishlist</description>
+    <scores>40</scores>
+  </EventScore>
+  <EventScore>
+    <type>5</type>
+    <description>browsed from search result</description>
+    <scores>25,32,38,43,47</scores>
+  </EventScore>
+  <EventScore>
+    <type>6</type>
+    <description>browsed for recommendation list</description>
+    <scores>15,21,26,30,33</scores>
+  </EventScore>
+  <EventScore>
+    <type>7</type>
+    <description>browsed</description>
+    <scores>5,12,17,21,24</scores>
+  </EventScore>
+  <EventScore>
+    <type>-1</type>
+    <description>returned</description>
+    <scores></scores>
+  </EventScore>
+  <EventScore>
+    <type>-2</type>
+    <description>left checkout</description>
+    <scores></scores>
+  </EventScore>
+  <EventScore>
+    <type>-3</type>
+    <description>removed from shopping cart</description>
+    <scores></scores>
+  </EventScore>
+  <EventScore>
+    <type>-4</type>
+    <description>removed from wish list</description>
+    <scores></scores>
+  </EventScore>
+</EventScores>

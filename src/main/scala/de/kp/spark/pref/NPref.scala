@@ -42,7 +42,7 @@ object NPrefBuilder {
    * as an ecommerce order or transaction etc.
    * 
    */  
-  def build(rawset:RDD[(String,String,List[(Long,List[Int])])]):RDD[BasePref] = {
+  def build(rawset:RDD[(String,String,List[(Long,List[Int])])]):RDD[NPref] = {
     
     val sc = rawset.context
 
@@ -62,7 +62,7 @@ object NPrefBuilder {
       
     })
 
-    /**
+    /*
      * Compute the item support on a per (site,user) basis; then from this support
      * and the total number of groups, the item preference is computed as follows:
      * 
@@ -87,7 +87,7 @@ object NPrefBuilder {
       
     })
    
-    /**
+    /*
      * The user-item preferences are solely based on the purchase data of a particular
      * user so far; the respective value, however, is far from representing a real-life 
      * value, as it only takes the purchase frequency into account.
@@ -128,7 +128,7 @@ object NPrefBuilder {
         val mpref = bcprefs.value(item)
         
         val npref = Math.round( 5* (pref.toDouble / mpref.toDouble) ).toInt
-        new BasePref(site,user,item,npref)
+        new NPref(site,user,item,npref)
         
       })
       

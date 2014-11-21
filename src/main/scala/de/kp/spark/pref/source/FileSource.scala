@@ -23,7 +23,6 @@ import org.apache.spark.rdd.RDD
 
 import de.kp.spark.pref.Configuration
 
-
 class FileSource(@transient sc:SparkContext) {
 
   val input = Configuration.file()

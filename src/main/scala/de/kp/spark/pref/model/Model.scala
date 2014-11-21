@@ -23,15 +23,19 @@ import org.json4s._
 import org.json4s.native.Serialization
 import org.json4s.native.Serialization.{read,write}
 
+case class EventScore(
+  event:Int,desc:String,scores:List[Int]
+)
+
 /**
  * Preference & Preferences specify basic user item ratings,
  * with no reference to contextual information
  */
-case class BasePref(
+case class NPref(
   site:String,user:String,item:Int,score:Int
 )
 
-case class BasePrefs(items:List[BasePref])
+case class NPrefs(items:List[NPref])
 
 /**
  * The Field and Fields classes are used to specify the fields with
@@ -50,6 +54,35 @@ case class Fields(items:List[Field])
 case class JobDesc(
   service:String,task:String,status:String
 )
+
+object Algorithms {
+  
+  val NPREF:String = "NPREF"
+    
+  private val algorithms = List(NPREF)
+  def isAlgorithm(algorithm:String):Boolean = algorithms.contains(algorithm)
+  
+}
+
+object Messages {
+
+  def BUILDING_STARTED(uid:String) = 
+    String.format("""[UID: %s] Preference building task started.""", uid)
+  
+  def MISSING_PARAMETERS(uid:String):String = 
+    String.format("""[UID: %s] Preference building task has missing parameters.""", uid)
+   
+}
+
+object ResponseStatus {
+  
+  val FAILURE:String = "failure"
+  val SUCCESS:String = "success"
+
+  val BUILDING_STARTED:String  = "preference:building:started"
+  val BUILDING_FINISHED:String = "preference:building:finished"
+    
+}
 
 /**
  * ServiceRequest & ServiceResponse specify the content 
