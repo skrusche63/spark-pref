@@ -57,9 +57,10 @@ case class JobDesc(
 
 object Algorithms {
   
+  val EPREF:String = "EPREF"
   val NPREF:String = "NPREF"
     
-  private val algorithms = List(NPREF)
+  private val algorithms = List(EPREF,NPREF)
   def isAlgorithm(algorithm:String):Boolean = algorithms.contains(algorithm)
   
 }

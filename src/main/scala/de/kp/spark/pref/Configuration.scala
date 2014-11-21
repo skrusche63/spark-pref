@@ -75,6 +75,17 @@ object Configuration {
    
   }
   
+  def output:Map[String,String] = {
+  
+    val cfg = config.getConfig("output")
+    
+    val event = cfg.getString("event.model")
+    val trans = cfg.getString("trans.model")
+    
+    Map("event" -> event, "trans" -> trans)
+    
+  }
+  
   def redis():(String,String) = {
   
     val cfg = config.getConfig("redis")

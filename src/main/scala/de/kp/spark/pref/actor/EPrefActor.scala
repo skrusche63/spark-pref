@@ -21,19 +21,18 @@ package de.kp.spark.pref.actor
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
-import de.kp.spark.pref.NPrefBuilder
+import de.kp.spark.pref.EPrefBuilder
 
-import de.kp.spark.pref.source.TransactionSource
+import de.kp.spark.pref.source.EventSource
 import de.kp.spark.pref.model._
 
 import de.kp.spark.pref.redis.RedisCache
 
 /*
- * The NPrefActor is responsible for normalized preferences;
- * these describe the relationship between users and items
- * without any contextual information taken into account 
+ * The EPrefActor is responsible for preferences built from
+ * customer engagement events or sequences
  */
-class NPrefActor(@transient val sc:SparkContext) extends BaseActor {
+class EPrefActor(@transient val sc:SparkContext) extends BaseActor {
  
   def receive = {
 
@@ -50,10 +49,10 @@ class NPrefActor(@transient val sc:SparkContext) extends BaseActor {
  
         try {
           
-          val source = new TransactionSource(sc)
-          val dataset = source.transDS(req.data)
+          val source = new EventSource(sc)
+          val dataset = source.eventDS(req.data)
 
-          NPrefBuilder.buildAndSave(dataset)
+          EPrefBuilder.buildAndSave(dataset)
           
         } catch {
           case e:Exception => RedisCache.addStatus(req,ResponseStatus.FAILURE)          

@@ -29,7 +29,7 @@ import scala.collection.mutable.Buffer
  * implicit preferences of a certain user for a specific
  * item
  */
-object NPrefBuilder {
+object NPrefBuilder extends Serializable {
 
   /**
    * The NPrefBuilder supports the following input format: (site,user,groups).
@@ -42,7 +42,7 @@ object NPrefBuilder {
    * as an ecommerce order or transaction etc.
    * 
    */  
-  def build(rawset:RDD[(String,String,List[(Long,List[Int])])]):RDD[NPref] = {
+  def buildAndSave(rawset:RDD[(String,String,List[(Long,List[Int])])]) {
     
     val sc = rawset.context
 
@@ -119,7 +119,7 @@ object NPrefBuilder {
     }).collect().toMap
 
     val bcprefs = sc.broadcast(itemMaxPref)
-    userItemPrefs.flatMap(data => {
+    val nprefs = userItemPrefs.flatMap(data => {
       
       val (site,user,prefs) = data
       prefs.map(data => {
@@ -128,11 +128,14 @@ object NPrefBuilder {
         val mpref = bcprefs.value(item)
         
         val npref = Math.round( 5* (pref.toDouble / mpref.toDouble) ).toInt
-        new NPref(site,user,item,npref)
+        List(site,user,item.toString,npref.toString).mkString(",")
         
       })
       
     })
+
+    val path = Configuration.output("trans")
+    nprefs.saveAsTextFile(path)
     
   }
   
