@@ -21,6 +21,7 @@ package de.kp.spark.pref.source
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
+import de.kp.spark.core.source.ElasticSource
 import de.kp.spark.pref.model.Sources
 
 /**

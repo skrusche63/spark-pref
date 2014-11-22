@@ -28,7 +28,7 @@ class TransactionModel(@transient sc:SparkContext) extends Serializable {
       
     })
     
-    buildSequences(dataset)
+    buildTransactions(dataset)
     
   }
   
@@ -42,7 +42,7 @@ class TransactionModel(@transient sc:SparkContext) extends Serializable {
     
     })
     
-    buildSequences(dataset)
+    buildTransactions(dataset)
     
   }
   
@@ -66,7 +66,7 @@ class TransactionModel(@transient sc:SparkContext) extends Serializable {
       
     })
     
-    buildSequences(dataset)
+    buildTransactions(dataset)
 
   }
     
@@ -88,11 +88,11 @@ class TransactionModel(@transient sc:SparkContext) extends Serializable {
       
     })
     
-    buildSequences(dataset)
+    buildTransactions(dataset)
     
   }
 
-  private def buildSequences(dataset:RDD[(String,String,String,Long,String)]):RDD[(String,String,List[(Long,List[Int])])] = {
+  private def buildTransactions(dataset:RDD[(String,String,String,Long,String)]):RDD[(String,String,List[(Long,List[Int])])] = {
     /*
      * Group dataset by site & user and aggregate all items of a
      * certain group and all groups into a time-ordered sequence
