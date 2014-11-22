@@ -21,7 +21,7 @@ package de.kp.spark.pref.redis
 import redis.clients.jedis.Jedis
 import de.kp.spark.pref.Configuration
 
-object RedisClient {
+object RedisClient extends Serializable {
 
   def apply():Jedis = {
 

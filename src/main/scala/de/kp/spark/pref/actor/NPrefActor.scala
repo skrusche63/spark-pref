@@ -45,7 +45,7 @@ class NPrefActor(@transient val sc:SparkContext) extends BaseActor {
       sender ! response(req, missing)
 
       if (missing == false) {
-        /* Register status */
+        
         RedisCache.addStatus(req,ResponseStatus.BUILDING_STARTED)
  
         try {
@@ -53,7 +53,14 @@ class NPrefActor(@transient val sc:SparkContext) extends BaseActor {
           val source = new TransactionSource(sc)
           val dataset = source.transDS(req.data)
 
-          NPrefBuilder.buildAndSave(dataset)
+          req.data("sink") match {
+            
+            case Sinks.FILE  => NPrefBuilder.buildToFile(req,dataset)
+            case Sinks.REDIS => NPrefBuilder.buildToRedis(req,dataset)
+            
+            case _ => {/*do not happen*/}
+            
+          }
           
         } catch {
           case e:Exception => RedisCache.addStatus(req,ResponseStatus.FAILURE)          
@@ -80,7 +87,14 @@ class NPrefActor(@transient val sc:SparkContext) extends BaseActor {
    * with this request
    */
   private def properties(req:ServiceRequest):Boolean = {
+    
+    if (req.data.contains("uid") == false) return false
+    if (req.data.contains("sink") == false) return false
+    
+    if (Sinks.isSink(req.data("sink")) == false) return false
+    
     true    
+    
   }
 
 }

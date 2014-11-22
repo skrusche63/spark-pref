@@ -21,15 +21,39 @@ package de.kp.spark.pref
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext._
 
+import de.kp.spark.pref.redis.RedisCache
+import de.kp.spark.pref.sink.RedisSink
+
+import de.kp.spark.pref.model._
 import de.kp.spark.pref.util.EventScoreBuilder
 
 object EPrefBuilder extends Serializable {
 
-  def buildAndSave(rawset:RDD[(String,String,String,Int,Long)]) {
+  def buildToFile(req:ServiceRequest,rawset:RDD[(String,String,String,Int,Long)]) {
     
+    val ratings = buildRatings(rawset)
+    
+    val path = Configuration.output("event")
+    ratings.saveAsTextFile(path)
+
+    RedisCache.addStatus(req,ResponseStatus.BUILDING_FINISHED)
+    
+  }
+  
+  def buildToRedis(req:ServiceRequest,rawset:RDD[(String,String,String,Int,Long)]) {
+    
+    val ratings = buildRatings(rawset)
+    ratings.foreach(rating => RedisSink.addRating(req.data("uid"), rating))
+
+    RedisCache.addStatus(req,ResponseStatus.BUILDING_FINISHED)
+    
+  }
+  
+  private def buildRatings(rawset:RDD[(String,String,String,Int,Long)]):RDD[String] = {
+   
     /* Group extracted data by site, user and item */
     val grouped = rawset.groupBy(x => (x._1,x._2,x._3))
-    val ratings = grouped.map(x => {
+    grouped.map(x => {
       
       val (site,user,item) = x._1
       val events = x._2
@@ -102,9 +126,6 @@ object EPrefBuilder extends Serializable {
       List(site,user,item,rating.toString,latest.toString,event.toString).mkString(",")
       
     })
-    
-    val path = Configuration.output("event")
-    ratings.saveAsTextFile(path)
     
   }
   

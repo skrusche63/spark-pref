@@ -21,7 +21,11 @@ package de.kp.spark.pref
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext._
 
+import de.kp.spark.pref.redis.RedisCache
+import de.kp.spark.pref.sink.RedisSink
+
 import de.kp.spark.pref.model._
+
 import scala.collection.mutable.Buffer
 
 /**
@@ -42,7 +46,27 @@ object NPrefBuilder extends Serializable {
    * as an ecommerce order or transaction etc.
    * 
    */  
-  def buildAndSave(rawset:RDD[(String,String,List[(Long,List[Int])])]) {
+  def buildToFile(req:ServiceRequest,rawset:RDD[(String,String,List[(Long,List[Int])])]) {
+    
+    val nprefs = buildRatings(rawset)
+    
+    val path = Configuration.output("trans")
+    nprefs.saveAsTextFile(path)
+
+    RedisCache.addStatus(req,ResponseStatus.BUILDING_FINISHED)
+    
+  }
+  
+   def buildToRedis(req:ServiceRequest,rawset:RDD[(String,String,List[(Long,List[Int])])]) {
+    
+    val nprefs = buildRatings(rawset)
+    nprefs.foreach(rating => RedisSink.addRating(req.data("uid"),rating))
+
+    RedisCache.addStatus(req,ResponseStatus.BUILDING_FINISHED)
+    
+  }
+ 
+  private def buildRatings(rawset:RDD[(String,String,List[(Long,List[Int])])]):RDD[String] = {
     
     val sc = rawset.context
 
@@ -119,7 +143,7 @@ object NPrefBuilder extends Serializable {
     }).collect().toMap
 
     val bcprefs = sc.broadcast(itemMaxPref)
-    val nprefs = userItemPrefs.flatMap(data => {
+    userItemPrefs.flatMap(data => {
       
       val (site,user,prefs) = data
       prefs.map(data => {
@@ -133,10 +157,7 @@ object NPrefBuilder extends Serializable {
       })
       
     })
-
-    val path = Configuration.output("trans")
-    nprefs.saveAsTextFile(path)
     
   }
-  
+ 
 }

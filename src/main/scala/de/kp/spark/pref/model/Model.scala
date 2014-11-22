@@ -97,6 +97,16 @@ case class ServiceResponse(
   service:String,task:String,data:Map[String,String],status:String
 )
 
+object Sinks {
+
+  val FILE:String  = "FILE"
+  val REDIS:String = "REDIS" 
+  
+  private val sinks = List(FILE,REDIS)
+  def isSink(sink:String):Boolean = sinks.contains(sink)
+  
+}
+
 object Sources {
 
   val FILE:String    = "FILE"

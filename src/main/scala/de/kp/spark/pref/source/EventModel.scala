@@ -25,16 +25,15 @@ class EventModel(@transient sc:SparkContext) extends Serializable {
   
   /**
    * The raw data are retrieved from a pre processed web log file;
-   * the format expected is: site|timestamp|user|event|item
+   * the format expected is: site,user,item,time,event
    */
   def buildFile(uid:String,rawset:RDD[String]):RDD[(String,String,String,Int,Long)] = {
     
-    rawset.map(valu => {
-      
-      val Array(site,timestamp,user,event,item) = valu.split("\\|")        
-      (site,user,item,event.toInt,timestamp.toLong)
-    
+    rawset.map(line => {
+      val Array(site,user,item,time,event) = line.split(",")
+      (site,user,item,event.toInt,time.toLong)
     })
 
   }
+  
 }
