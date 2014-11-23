@@ -21,8 +21,12 @@ package de.kp.spark.pref.source
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
-import de.kp.spark.core.source.ElasticSource
+import de.kp.spark.core.source.{ElasticSource,FileSource,JdbcSource}
+
+import de.kp.spark.pref.Configuration
 import de.kp.spark.pref.model.Sources
+
+import de.kp.spark.pref.spec.Fields
 
 /**
  * A TransactionSource is an abstraction layer on top of
@@ -49,20 +53,24 @@ class TransactionSource(@transient sc:SparkContext) {
 
       case Sources.FILE => {
         
-        val rawset = new FileSource(sc).connect(data)
+        val path = Configuration.file()._2
+
+        val rawset = new FileSource(sc).connect(data,path)
         transactionModel.buildFile(uid,rawset)
         
       }
 
       case Sources.JDBC => {
-        
-        val rawset = new JdbcSource(sc).connect(data)
+    
+        val fields = Fields.get(uid).map(kv => kv._2._1).toList    
+         
+        val rawset = new JdbcSource(sc).connect(data,fields)
         transactionModel.buildJDBC(uid,rawset)
         
       }
 
       case Sources.PIWIK => {
-        
+       
         val rawset = new PiwikSource(sc).connect(data)
         transactionModel.buildPiwik(uid,rawset)
         

@@ -18,7 +18,7 @@ package de.kp.spark.pref.sink
  * If not, see <http://www.gnu.org/licenses/>.
  */
 
-import de.kp.spark.pref.redis.RedisClient
+import de.kp.spark.core.redis.RedisClient
 
 object RedisSink extends Serializable {
 

@@ -21,6 +21,9 @@ package de.kp.spark.pref.source
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
+import de.kp.spark.core.source.FileSource
+
+import de.kp.spark.pref.Configuration
 import de.kp.spark.pref.model.Sources
 
 class EventSource(@transient sc:SparkContext) {
@@ -41,7 +44,9 @@ class EventSource(@transient sc:SparkContext) {
 
       case Sources.FILE => {
         
-        val rawset = new FileSource(sc).connect(data)
+        val path = Configuration.file()._1
+        
+        val rawset = new FileSource(sc).connect(data,path)
         eventModel.buildFile(uid,rawset)
         
       }

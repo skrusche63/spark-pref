@@ -54,10 +54,14 @@ object Configuration {
     
   }
    
-  def file():String = {
+  def file():(String,String) = {
   
     val cfg = config.getConfig("file")
-    cfg.getString("path")   
+    
+    val event = cfg.getString("event")   
+    val trans = cfg.getString("trans")   
+    
+    (event,trans)
     
   }
  
