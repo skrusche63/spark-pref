@@ -21,7 +21,6 @@ package de.kp.spark.pref
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext._
 
-import de.kp.spark.pref.redis.RedisCache
 import de.kp.spark.pref.sink.RedisSink
 
 import de.kp.spark.pref.model._
@@ -35,8 +34,6 @@ object EPrefBuilder extends Serializable {
     
     val path = Configuration.output("event")
     ratings.saveAsTextFile(path)
-
-    RedisCache.addStatus(req,ResponseStatus.BUILDING_FINISHED)
     
   }
   
@@ -44,8 +41,6 @@ object EPrefBuilder extends Serializable {
     
     val ratings = buildRatings(rawset)
     ratings.foreach(rating => RedisSink.addRating(req.data("uid"), rating))
-
-    RedisCache.addStatus(req,ResponseStatus.BUILDING_FINISHED)
     
   }
   

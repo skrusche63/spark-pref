@@ -60,6 +60,11 @@ class EPrefActor(@transient val sc:SparkContext) extends BaseActor {
             case _ => {/*do not happen*/}
             
           }
+
+          RedisCache.addStatus(req,ResponseStatus.BUILDING_FINISHED)
+    
+          /* Notify potential listeners */
+          notify(req,ResponseStatus.BUILDING_FINISHED)
           
         } catch {
           case e:Exception => RedisCache.addStatus(req,ResponseStatus.FAILURE)          

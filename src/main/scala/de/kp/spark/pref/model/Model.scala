@@ -27,6 +27,10 @@ case class EventScore(
   event:Int,desc:String,scores:List[Int]
 )
 
+case class Listener(
+  timeout:Int, url:String
+)
+
 /**
  * Preference & Preferences specify basic user item ratings,
  * with no reference to contextual information
