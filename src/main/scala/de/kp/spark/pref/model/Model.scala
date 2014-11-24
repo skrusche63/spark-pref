@@ -1,30 +1,24 @@
 package de.kp.spark.pref.model
 /* Copyright (c) 2014 Dr. Krusche & Partner PartG
 * 
-* This file is part of the Spark-pref project
+* This file is part of the Spark-Pref project
 * (https://github.com/skrusche63/spark-pref).
 * 
-* Spark-pref is free software: you can redistribute it and/or modify it under the
+* Spark-Pref is free software: you can redistribute it and/or modify it under the
 * terms of the GNU General Public License as published by the Free Software
 * Foundation, either version 3 of the License, or (at your option) any later
 * version.
 * 
-* Spark-pref is distributed in the hope that it will be useful, but WITHOUT ANY
+* Spark-Pref is distributed in the hope that it will be useful, but WITHOUT ANY
 * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 * You should have received a copy of the GNU General Public License along with
-* Spark-pref. 
+* Spark-Pref. 
 * 
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
-import org.json4s._
-
-import org.json4s.native.Serialization
-import org.json4s.native.Serialization.{read,write}
-
 import de.kp.spark.core.model._
-import de.kp.spark.core.model.BaseMessages
 
 case class EventScore(
   event:Int,desc:String,scores:List[Int]
@@ -39,14 +33,6 @@ case class NPref(
 )
 
 case class NPrefs(items:List[NPref])
-
-/**
- * Service requests are mapped onto job descriptions and are stored
- * in a Redis instance
- */
-case class JobDesc(
-  service:String,task:String,status:String
-)
 
 object Algorithms {
   
@@ -100,19 +86,4 @@ object Sources {
   
 }
 
-object Serializer {
-    
-  implicit val formats = Serialization.formats(NoTypeHints)
-  
-  def serializeFields(fields:Fields):String = write(fields) 
-  def deserializeFields(fields:String):Fields = read[Fields](fields)
-
-  def serializeJob(job:JobDesc):String = write(job)
-  def deserializeJob(job:String):JobDesc = read[JobDesc](job)
-
-  def serializeResponse(response:ServiceResponse):String = write(response)
-  
-  def deserializeRequest(request:String):ServiceRequest = read[ServiceRequest](request)
-  def serializeRequest(request:ServiceRequest):String = write(request)
-  
-}
+object Serializer extends BaseSerializer

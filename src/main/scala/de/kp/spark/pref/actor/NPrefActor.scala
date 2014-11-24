@@ -22,12 +22,11 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 import de.kp.spark.core.model._
+
 import de.kp.spark.pref.NPrefBuilder
 
 import de.kp.spark.pref.source.TransactionSource
 import de.kp.spark.pref.model._
-
-import de.kp.spark.pref.redis.RedisCache
 
 /*
  * The NPrefActor is responsible for normalized preferences;
@@ -35,7 +34,7 @@ import de.kp.spark.pref.redis.RedisCache
  * without any contextual information taken into account 
  */
 class NPrefActor(@transient val sc:SparkContext) extends BaseActor {
- 
+  
   def receive = {
 
     case req:ServiceRequest => {
@@ -47,12 +46,12 @@ class NPrefActor(@transient val sc:SparkContext) extends BaseActor {
 
       if (missing == false) {
         
-        RedisCache.addStatus(req,ResponseStatus.BUILDING_STARTED)
+        cache.addStatus(req,ResponseStatus.BUILDING_STARTED)
  
         try {
           
           val source = new TransactionSource(sc)
-          val dataset = source.transDS(req.data)
+          val dataset = source.transDS(req)
 
           req.data("sink") match {
             
@@ -63,13 +62,13 @@ class NPrefActor(@transient val sc:SparkContext) extends BaseActor {
             
           }
 
-          RedisCache.addStatus(req,ResponseStatus.BUILDING_FINISHED)
+          cache.addStatus(req,ResponseStatus.BUILDING_FINISHED)
     
           /* Notify potential listeners */
           notify(req,ResponseStatus.BUILDING_FINISHED)
           
         } catch {
-          case e:Exception => RedisCache.addStatus(req,ResponseStatus.FAILURE)          
+          case e:Exception => cache.addStatus(req,ResponseStatus.FAILURE)          
         }
  
 

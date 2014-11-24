@@ -29,14 +29,13 @@ import de.kp.spark.core.model._
 import de.kp.spark.pref.Configuration
 import de.kp.spark.pref.model._
 
-import de.kp.spark.pref.redis.RedisCache
-
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 
 class PrefBuilder(@transient val sc:SparkContext) extends BaseActor {
 
   implicit val ec = context.dispatcher
+
   def receive = {
 
     case req:ServiceRequest => {
@@ -48,7 +47,7 @@ class PrefBuilder(@transient val sc:SparkContext) extends BaseActor {
         
         case "train" => {
           
-          val response = validate(req.data) match {
+          val response = validate(req) match {
             
             case None => train(req).mapTo[ServiceResponse]            
             case Some(message) => Future {failure(req,message)}
@@ -79,7 +78,7 @@ class PrefBuilder(@transient val sc:SparkContext) extends BaseActor {
        
         case "status" => {
           
-          val resp = if (RedisCache.taskExists(uid) == false) {           
+          val resp = if (cache.statusExists(req) == false) {           
             failure(req,Messages.TASK_DOES_NOT_EXIST(uid))           
           } else {            
             status(req)
@@ -130,19 +129,19 @@ class PrefBuilder(@transient val sc:SparkContext) extends BaseActor {
     val uid = req.data("uid")
     val data = Map("uid" -> uid)
                 
-    new ServiceResponse(req.service,req.task,data,RedisCache.status(uid))	
+    new ServiceResponse(req.service,req.task,data,cache.status(req))	
 
   }
 
-  private def validate(params:Map[String,String]):Option[String] = {
+  private def validate(req:ServiceRequest):Option[String] = {
 
-    val uid = params("uid")
+    val uid = req.data("uid")
     
-    if (RedisCache.taskExists(uid)) {            
+    if (cache.statusExists(req)) {            
       return Some(Messages.TASK_ALREADY_STARTED(uid))   
     }
 
-    params.get("algorithm") match {
+    req.data.get("algorithm") match {
         
       case None => {
         return Some(Messages.NO_ALGORITHM_PROVIDED(uid))              
@@ -157,7 +156,7 @@ class PrefBuilder(@transient val sc:SparkContext) extends BaseActor {
     
     }  
     
-    params.get("source") match {
+    req.data.get("source") match {
         
       case None => {
         return Some(Messages.NO_SOURCE_PROVIDED(uid))       

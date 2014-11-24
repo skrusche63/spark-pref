@@ -22,19 +22,18 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 import de.kp.spark.core.model._
+
 import de.kp.spark.pref.EPrefBuilder
 
 import de.kp.spark.pref.source.EventSource
 import de.kp.spark.pref.model._
-
-import de.kp.spark.pref.redis.RedisCache
 
 /*
  * The EPrefActor is responsible for preferences built from
  * customer engagement events or sequences
  */
 class EPrefActor(@transient val sc:SparkContext) extends BaseActor {
- 
+  
   def receive = {
 
     case req:ServiceRequest => {
@@ -46,7 +45,7 @@ class EPrefActor(@transient val sc:SparkContext) extends BaseActor {
 
       if (missing == false) {
         
-        RedisCache.addStatus(req,ResponseStatus.BUILDING_STARTED)
+        cache.addStatus(req,ResponseStatus.BUILDING_STARTED)
  
         try {
           
@@ -62,13 +61,13 @@ class EPrefActor(@transient val sc:SparkContext) extends BaseActor {
             
           }
 
-          RedisCache.addStatus(req,ResponseStatus.BUILDING_FINISHED)
+          cache.addStatus(req,ResponseStatus.BUILDING_FINISHED)
     
           /* Notify potential listeners */
           notify(req,ResponseStatus.BUILDING_FINISHED)
           
         } catch {
-          case e:Exception => RedisCache.addStatus(req,ResponseStatus.FAILURE)          
+          case e:Exception => cache.addStatus(req,ResponseStatus.FAILURE)          
         }
  
 

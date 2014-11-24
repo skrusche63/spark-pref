@@ -1,19 +1,38 @@
 package de.kp.spark.pref.source
+/* Copyright (c) 2014 Dr. Krusche & Partner PartG
+* 
+* This file is part of the Spark-Pref project
+* (https://github.com/skrusche63/spark-pref).
+* 
+* Spark-Pref is free software: you can redistribute it and/or modify it under the
+* terms of the GNU General Public License as published by the Free Software
+* Foundation, either version 3 of the License, or (at your option) any later
+* version.
+* 
+* Spark-Pref is distributed in the hope that it will be useful, but WITHOUT ANY
+* WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+* A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+* You should have received a copy of the GNU General Public License along with
+* Spark-Pref. 
+* 
+* If not, see <http://www.gnu.org/licenses/>.
+*/
 
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
-import de.kp.spark.pref.model._
+import de.kp.spark.core.model._
 
+import de.kp.spark.pref.model._
 import de.kp.spark.pref.spec.Fields
 
 import scala.collection.mutable.ArrayBuffer
 
 class TransactionModel(@transient sc:SparkContext) extends Serializable {
   
-  def buildElastic(uid:String,rawset:RDD[Map[String,String]]):RDD[(String,String,List[(Long,List[Int])])] = {
+  def buildElastic(req:ServiceRequest,rawset:RDD[Map[String,String]]):RDD[(String,String,List[(Long,List[Int])])] = {
  
-    val spec = sc.broadcast(Fields.get(uid))
+    val spec = sc.broadcast(Fields.get(req))
     val dataset = rawset.map(data => {
       
       val site = data(spec.value("site")._1)
@@ -32,7 +51,7 @@ class TransactionModel(@transient sc:SparkContext) extends Serializable {
     
   }
   
-  def buildFile(uid:String,rawset:RDD[String]):RDD[(String,String,List[(Long,List[Int])])] = {
+  def buildFile(req:ServiceRequest,rawset:RDD[String]):RDD[(String,String,List[(Long,List[Int])])] = {
     
     val dataset = rawset.map(valu => {
       
@@ -46,9 +65,9 @@ class TransactionModel(@transient sc:SparkContext) extends Serializable {
     
   }
   
-  def buildJDBC(uid:String,rawset:RDD[Map[String,Any]]):RDD[(String,String,List[(Long,List[Int])])] = {
+  def buildJDBC(req:ServiceRequest,rawset:RDD[Map[String,Any]]):RDD[(String,String,List[(Long,List[Int])])] = {
         
-    val fieldspec = Fields.get(uid)
+    val fieldspec = Fields.get(req)
     val fields = fieldspec.map(kv => kv._2._1).toList    
 
     val spec = sc.broadcast(fieldspec)
@@ -70,7 +89,7 @@ class TransactionModel(@transient sc:SparkContext) extends Serializable {
 
   }
     
-  def buildPiwik(uid:String,rawset:RDD[Map[String,Any]]):RDD[(String,String,List[(Long,List[Int])])] = {
+  def buildPiwik(req:ServiceRequest,rawset:RDD[Map[String,Any]]):RDD[(String,String,List[(Long,List[Int])])] = {
     
     val dataset = rawset.map(row => {
       

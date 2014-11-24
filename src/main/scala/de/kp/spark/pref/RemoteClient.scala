@@ -36,8 +36,6 @@ class RemoteClient(service:String) {
 
   val listener = Listeners.get(service)
   implicit val timeout = Timeout(DurationInt(listener.timeout).second)
-  
-  private val url = Listeners.get(service)
     
   private val system = ActorSystem(service, conf)
   private val remote = system.actorSelection(listener.url)

@@ -21,6 +21,7 @@ package de.kp.spark.pref.source
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
+import de.kp.spark.core.model._
 import de.kp.spark.core.source.{ElasticSource,FileSource,JdbcSource}
 
 import de.kp.spark.pref.Configuration
@@ -37,17 +38,15 @@ class TransactionSource(@transient sc:SparkContext) {
 
   private val transactionModel = new TransactionModel(sc)
   
-  def transDS(data:Map[String,String]):RDD[(String,String,List[(Long,List[Int])])] = {
+  def transDS(req:ServiceRequest):RDD[(String,String,List[(Long,List[Int])])] = {
     
-    val uid = data("uid")
-    
-    val source = data("source")
+    val source = req.data("source")
     source match {
 
       case Sources.ELASTIC => {
         
-        val rawset = new ElasticSource(sc).connect(data)
-        transactionModel.buildElastic(uid,rawset)
+        val rawset = new ElasticSource(sc).connect(req.data)
+        transactionModel.buildElastic(req,rawset)
         
       }
 
@@ -55,24 +54,24 @@ class TransactionSource(@transient sc:SparkContext) {
         
         val path = Configuration.file()._2
 
-        val rawset = new FileSource(sc).connect(data,path)
-        transactionModel.buildFile(uid,rawset)
+        val rawset = new FileSource(sc).connect(req.data,path)
+        transactionModel.buildFile(req,rawset)
         
       }
 
       case Sources.JDBC => {
     
-        val fields = Fields.get(uid).map(kv => kv._2._1).toList    
+        val fields = Fields.get(req).map(kv => kv._2._1).toList    
          
-        val rawset = new JdbcSource(sc).connect(data,fields)
-        transactionModel.buildJDBC(uid,rawset)
+        val rawset = new JdbcSource(sc).connect(req.data,fields)
+        transactionModel.buildJDBC(req,rawset)
         
       }
 
       case Sources.PIWIK => {
        
-        val rawset = new PiwikSource(sc).connect(data)
-        transactionModel.buildPiwik(uid,rawset)
+        val rawset = new PiwikSource(sc).connect(req.data)
+        transactionModel.buildPiwik(req,rawset)
         
       }
             
