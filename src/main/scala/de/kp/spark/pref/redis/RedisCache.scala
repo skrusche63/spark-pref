@@ -21,6 +21,8 @@ package de.kp.spark.pref.redis
 import java.util.Date
 import scala.collection.JavaConversions._
 
+import de.kp.spark.core.model._
+
 import de.kp.spark.core.redis.RedisClient
 import de.kp.spark.pref.model._
 

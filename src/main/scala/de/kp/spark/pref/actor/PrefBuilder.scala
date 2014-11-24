@@ -24,6 +24,8 @@ import akka.actor.{ActorRef,Props}
 import akka.pattern.ask
 import akka.util.Timeout
 
+import de.kp.spark.core.model._
+
 import de.kp.spark.pref.Configuration
 import de.kp.spark.pref.model._
 

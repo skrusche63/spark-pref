@@ -21,6 +21,7 @@ package de.kp.spark.pref.actor
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
+import de.kp.spark.core.model._
 import de.kp.spark.pref.EPrefBuilder
 
 import de.kp.spark.pref.source.EventSource

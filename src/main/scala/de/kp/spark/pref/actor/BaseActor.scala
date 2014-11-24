@@ -19,6 +19,7 @@ package de.kp.spark.pref.actor
 */
 
 import akka.actor.{Actor,ActorLogging}
+import de.kp.spark.core.model._
 
 import de.kp.spark.pref.RemoteContext
 import de.kp.spark.pref.model._

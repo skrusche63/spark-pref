@@ -21,6 +21,7 @@ package de.kp.spark.pref
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext._
 
+import de.kp.spark.core.model._
 import de.kp.spark.pref.sink.RedisSink
 
 import de.kp.spark.pref.model._
