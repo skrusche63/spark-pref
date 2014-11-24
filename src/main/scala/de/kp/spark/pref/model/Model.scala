@@ -71,11 +71,38 @@ object Algorithms {
 
 object Messages {
 
+  def ALGORITHM_IS_UNKNOWN(uid:String,algorithm:String):String = 
+    String.format("""[UID: %s] Algorithm '%s' is unknown.""", uid, algorithm)
+
   def BUILDING_STARTED(uid:String) = 
     String.format("""[UID: %s] Preference building task started.""", uid)
+
+  def GENERAL_ERROR(uid:String):String = 
+    String.format("""[UID: %s] A general error occured.""", uid)
   
   def MISSING_PARAMETERS(uid:String):String = 
     String.format("""[UID: %s] Preference building task has missing parameters.""", uid)
+ 
+  def NO_ALGORITHM_PROVIDED(uid:String):String = 
+    String.format("""[UID: %s] No algorithm specified.""", uid)
+
+  def NO_SOURCE_PROVIDED(uid:String):String = 
+    String.format("""[UID: %s] No source provided.""", uid)
+
+  def REQUEST_IS_UNKNOWN():String = 
+    String.format("""Unknown request.""")
+
+  def SOURCE_IS_UNKNOWN(uid:String,source:String):String = 
+    String.format("""[UID: %s] Source '%s' is unknown.""", uid, source)
+ 
+  def TASK_ALREADY_STARTED(uid:String):String = 
+    String.format("""[UID: %s] The task is already started.""", uid)
+
+  def TASK_DOES_NOT_EXIST(uid:String):String = 
+    String.format("""[UID: %s] The task does not exist.""", uid)
+
+  def TASK_IS_UNKNOWN(uid:String,task:String):String = 
+    String.format("""[UID: %s] The task '%s' is unknown.""", uid, task)
    
 }
 
