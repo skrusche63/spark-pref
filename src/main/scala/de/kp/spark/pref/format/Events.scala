@@ -1,4 +1,4 @@
-package de.kp.spark.pref.util
+package de.kp.spark.pref.format
 /* Copyright (c) 2014 Dr. Krusche & Partner PartG
 * 
 * This file is part of the Spark-Pref project
@@ -18,41 +18,22 @@ package de.kp.spark.pref.util
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
-import scala.xml._
-import scala.collection.mutable.ArrayBuffer
-
 import de.kp.spark.pref.model._
+import de.kp.spark.pref.util.EventScoreBuilder
 
-object EventScoreBuilder extends Serializable {
+object Events {
+
+  private val events = build()
   
-  private val path = "scores.xml"
-  private val eventScores = build()
+  private def build():Dict = {
+    
+    val eventScores = EventScoreBuilder.get
+    val events = eventScores.filter(x => x.event > 0).map(x => x.desc)
+    
+    new Dict().build(events)
 
-  private def build():List[EventScore] = {
- 
-    val buffer = ArrayBuffer.empty[EventScore]
-    
-    try {
- 
-      val root = XML.load(getClass.getClassLoader.getResource(path))     
-      for (element <- root \ "EventScore") {
-      
-        val event = (element \ "type").text.toInt
-        val desc  = (element \ "description").text.toString
-
-        val scores = (element \ "scores").text.split(",").toList.map(_.toInt)
-      
-        buffer += new EventScore(event,desc,scores)
-     }
-      
-    } catch {
-      case e:Exception => {}
-    }
-    
-    buffer.toList
-    
   }
-
-  def get() = eventScores
+  
+  def get = events
   
 }
