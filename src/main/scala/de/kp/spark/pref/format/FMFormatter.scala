@@ -19,10 +19,8 @@ package de.kp.spark.pref.format
 */
 
 import org.apache.spark.rdd.RDD
+import de.kp.spark.core.model._
 
-/**
- * TODO: This class is under construction 
- */
 object FMFormatter extends Serializable {
         
   private val DAY = 24 * 60 * 60 * 1000 // day in milliseconds
@@ -60,14 +58,14 @@ object FMFormatter extends Serializable {
    * f) event block of user-item-rating (should be a single column)
    * 
    */
-  def buildFeatures(ratings:RDD[(String,String,String,Int,Long,Int)]) {
+  def format(req:ServiceRequest,ratings:RDD[(String,String,String,Int,Long,Int)]):RDD[(Double,Array[Double])] = {
     
     val sc = ratings.context
     
-    // TODO: Note, that these data structure are rebuilt from Redis
     val edict = Events.get
-    val idict = new Dict()
-    val udict = new Dict()
+    
+    val idict = Items.get(req)
+    val udict = Users.get(req)
     /* 
      * Build broadcast variables from externally provided
      * data dictionaries
@@ -80,7 +78,7 @@ object FMFormatter extends Serializable {
      * to build the features for a single 'site'
      */
     val userRatings = ratings.groupBy(x => (x._1,x._2))
-    val features = userRatings.map(x => {
+    userRatings.flatMap(x => {
       
       val (site,user) = x._1
       /*
@@ -105,9 +103,8 @@ object FMFormatter extends Serializable {
        * Sort items and build data structure to determine
        * the item rated before the active item
        */
-      val latest = data.map(x => (x._1,x._3)).toList.sortBy(_._2)
-      
-      val targetedPoints = data.map(v => {
+      val latest = data.map(x => (x._1,x._3)).toList.sortBy(_._2)     
+      data.map(v => {
         
         val (item,rating,timestamp,event) = v
         

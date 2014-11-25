@@ -64,6 +64,15 @@ object ResponseStatus {
     
 }
 
+object Formats {
+
+  val FM:String = "FM"
+  
+  private val formats = List(FM)
+  def isFormat(format:String):Boolean = formats.contains(format)
+
+}
+
 object Sinks {
 
   val FILE:String  = "FILE"

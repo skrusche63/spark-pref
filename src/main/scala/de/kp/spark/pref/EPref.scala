@@ -25,6 +25,8 @@ import de.kp.spark.core.model._
 import de.kp.spark.pref.sink.RedisSink
 
 import de.kp.spark.pref.model._
+
+import de.kp.spark.pref.format.FMFormatter
 import de.kp.spark.pref.util.EventScoreBuilder
 
 object EPrefBuilder extends Serializable {
@@ -32,20 +34,78 @@ object EPrefBuilder extends Serializable {
   def buildToFile(req:ServiceRequest,rawset:RDD[(String,String,String,Int,Long)]) {
     
     val ratings = buildRatings(rawset)
+    if (req.data.contains("format")) {
+       
+      val format = req.data("format")
+      if (Formats.isFormat(format)) {
+        
+        val formatted = FMFormatter.format(req,ratings)
+        val stringified = formatted.map(record => {
+          
+          val target = record._1
+          val features = record._2
+          
+          "" + target + "," + features.mkString(" ")
+          
+        })
     
-    val path = Configuration.output("event")
-    ratings.saveAsTextFile(path)
+        val path = Configuration.output("event")
+        stringified.saveAsTextFile(path)
+        
+      }
+      
+    } else {
+      
+      val stringified = ratings.map(record => {
+        
+        val (site,user,item,rating,timestamp,event) = record
+        List(site,user,item,rating.toString,timestamp.toString,event.toString).mkString(",")
+        
+      })
+    
+      val path = Configuration.output("event")
+      stringified.saveAsTextFile(path)
+
+    }
     
   }
   
   def buildToRedis(req:ServiceRequest,rawset:RDD[(String,String,String,Int,Long)]) {
     
     val ratings = buildRatings(rawset)
-    ratings.foreach(rating => RedisSink.addRating(req.data("uid"), rating))
+    if (req.data.contains("format")) {
+       
+      val format = req.data("format")
+      if (Formats.isFormat(format)) {
+        
+        val formatted = FMFormatter.format(req,ratings)
+        formatted.foreach(record => {
+          
+          val target = record._1
+          val features = record._2
+          
+          val text = "" + target + "," + features.mkString(" ")
+          RedisSink.addRating(req.data("uid"), text)          
+        
+        })
+      }
+      
+    } else {
+      
+      ratings.foreach(record => {
+        
+        val (site,user,item,rating,timestamp,event) = record
+        val text = List(site,user,item,rating.toString,timestamp.toString,event.toString).mkString(",")
+        
+        RedisSink.addRating(req.data("uid"), text)
+
+      })
     
+    }
+  
   }
   
-  private def buildRatings(rawset:RDD[(String,String,String,Int,Long)]):RDD[String] = {
+  private def buildRatings(rawset:RDD[(String,String,String,Int,Long)]):RDD[(String,String,String,Int,Long,Int)] = {
    
     /* Group extracted data by site, user and item */
     val grouped = rawset.groupBy(x => (x._1,x._2,x._3))
@@ -119,7 +179,7 @@ object EPrefBuilder extends Serializable {
       /* Determine latest timestamp for the maximum engagement event */
       val latest = positives.filter(x => x._4 == event).toList.sortBy(x => -x._5).head._5
       
-      List(site,user,item,rating.toString,latest.toString,event.toString).mkString(",")
+      (site,user,item,rating,latest,event)
       
     })
     
