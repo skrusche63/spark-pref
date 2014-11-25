@@ -29,11 +29,6 @@ import de.kp.spark.pref.model.Sources
 
 import de.kp.spark.pref.spec.Fields
 
-/**
- * A TransactionSource is an abstraction layer on top of
- * different physical data source to retrieve a transaction
- * database compatible with the Top-K and Top-KNR algorithm
- */
 class TransactionSource(@transient sc:SparkContext) {
 
   private val transactionModel = new TransactionModel(sc)

@@ -28,7 +28,7 @@ import de.kp.spark.pref.EPrefBuilder
 import de.kp.spark.pref.source.EventSource
 import de.kp.spark.pref.model._
 
-/*
+/**
  * The EPrefActor is responsible for preferences built from
  * customer engagement events or sequences
  */
@@ -50,7 +50,7 @@ class EPrefActor(@transient val sc:SparkContext) extends BaseActor {
         try {
           
           val source = new EventSource(sc)
-          val dataset = source.eventDS(req.data)
+          val dataset = source.eventDS(req)
 
           req.data("sink") match {
             

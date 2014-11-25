@@ -21,43 +21,49 @@ package de.kp.spark.pref.source
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
-import de.kp.spark.core.source.FileSource
+import de.kp.spark.core.model._
+import de.kp.spark.core.source.{ElasticSource,FileSource,JdbcSource}
 
 import de.kp.spark.pref.Configuration
 import de.kp.spark.pref.model.Sources
 
+import de.kp.spark.pref.spec.Fields
+
 class EventSource(@transient sc:SparkContext) {
 
-  private val eventModel = new EventModel(sc)
+  private val model = new EventModel(sc)
   
-  def eventDS(data:Map[String,String]):RDD[(String,String,String,Int,Long)] = {
+  def eventDS(req:ServiceRequest):RDD[(String,String,String,Int,Long)] = {
     
-    val uid = data("uid")
-    
-    val source = data("source")
+    val source = req.data("source")
     source match {
 
       case Sources.ELASTIC => {
-        // TODO
-        null
+
+        val rawset = new ElasticSource(sc).connect(req.data)
+        model.buildElastic(req,rawset)
+      
       }
 
       case Sources.FILE => {
         
         val path = Configuration.file()._1
         
-        val rawset = new FileSource(sc).connect(data,path)
-        eventModel.buildFile(uid,rawset)
+        val rawset = new FileSource(sc).connect(req.data,path)
+        model.buildFile(req,rawset)
         
       }
 
       case Sources.JDBC => {
-        // TODO
-        null
+    
+        val fields = Fields.get(req).map(kv => kv._2._1).toList    
+         
+        val rawset = new JdbcSource(sc).connect(req.data,fields)
+        model.buildJDBC(req,rawset)
+        
       }
 
       case Sources.PIWIK => {
-        // TODO
         null
       }
             
