@@ -50,8 +50,7 @@ abstract class BaseActor extends Actor with ActorLogging {
   protected def notify(req:ServiceRequest,status:String) {
 
     /* Build message */
-    val data = Map("uid" -> req.data("uid"))
-    val response = new ServiceResponse(req.service,req.task,data,status)	
+    val response = new ServiceResponse(req.service,req.task,req.data,status)	
     
     /* Notify listeners */
     val message = Serializer.serializeResponse(response)    
