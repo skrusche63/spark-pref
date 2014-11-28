@@ -28,7 +28,7 @@ object PrefService {
 
   def main(args: Array[String]) {
     
-    val name:String = "pref-server"
+    val name:String = "rating-server"
     val conf:String = "server.conf"
 
     val server = new PrefService(conf, name)
@@ -48,7 +48,7 @@ class PrefService(conf:String, name:String) extends SparkService {
   /* Create Spark context */
   private val sc = createCtxLocal("PrefContext",Configuration.spark)      
 
-  val master = system.actorOf(Props(new PrefMaster(sc)), name="pref-master")
+  val master = system.actorOf(Props(new PrefMaster(sc)), name="rating-master")
 
   def shutdown = system.shutdown()
   

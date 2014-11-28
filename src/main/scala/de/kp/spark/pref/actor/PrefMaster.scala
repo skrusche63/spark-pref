@@ -53,8 +53,8 @@ class PrefMaster(@transient val sc:SparkContext) extends BaseActor {
 	  val deser = Serializer.deserializeRequest(req)
 	  val response = deser.task.split(":")(0) match {
 
-	    case "train"  => ask(actor("builder"),deser).mapTo[ServiceResponse]
-        case "status" => ask(actor("builder"),deser).mapTo[ServiceResponse]
+	    case "build"  => ask(actor("builder"),deser).mapTo[ServiceResponse]
+        case "status" => ask(actor("monitor"),deser).mapTo[ServiceResponse]
        
         case _ => {
 
@@ -90,6 +90,7 @@ class PrefMaster(@transient val sc:SparkContext) extends BaseActor {
     worker match {
   
       case "builder" => context.actorOf(Props(new PrefBuilder(sc)))
+      case "monitor" => context.actorOf(Props(new PrefMonitor()))
       
       case _ => null
       
