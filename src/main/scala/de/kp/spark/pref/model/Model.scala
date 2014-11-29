@@ -54,15 +54,7 @@ object Messages extends BaseMessages {
    
 }
 
-object ResponseStatus {
-  
-  val FAILURE:String = "failure"
-  val SUCCESS:String = "success"
-
-  val BUILDING_STARTED:String  = "preference:building:started"
-  val BUILDING_FINISHED:String = "preference:building:finished"
-    
-}
+object ResponseStatus extends BaseStatus 
 
 object Formats {
 

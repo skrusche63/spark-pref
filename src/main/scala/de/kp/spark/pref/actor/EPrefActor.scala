@@ -70,7 +70,6 @@ class EPrefActor(@transient val sc:SparkContext) extends BaseActor {
           case e:Exception => cache.addStatus(req,ResponseStatus.FAILURE)          
         }
  
-
       }
       
       context.stop(self)

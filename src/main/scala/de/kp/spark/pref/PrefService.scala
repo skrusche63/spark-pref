@@ -28,7 +28,7 @@ object PrefService {
 
   def main(args: Array[String]) {
     
-    val name:String = "rating-server"
+    val name:String = "akka-server"
     val conf:String = "server.conf"
 
     val server = new PrefService(conf, name)

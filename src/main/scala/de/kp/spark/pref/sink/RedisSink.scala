@@ -19,10 +19,12 @@ package de.kp.spark.pref.sink
  */
 
 import de.kp.spark.core.redis.RedisClient
+import de.kp.spark.pref.Configuration
 
 object RedisSink extends Serializable {
 
-  val client  = RedisClient()
+  val (host,port) = Configuration.redis
+  val client = RedisClient(host,port.toInt)
 
   def addRating(uid:String,rating:String) {
     

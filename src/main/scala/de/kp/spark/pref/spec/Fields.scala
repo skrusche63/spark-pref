@@ -21,6 +21,7 @@ package de.kp.spark.pref.spec
 import de.kp.spark.core.model._
 import de.kp.spark.core.redis.RedisCache
 
+import de.kp.spark.pref.Configuration
 import de.kp.spark.pref.model._
 
 import scala.xml._
@@ -32,8 +33,9 @@ import scala.collection.mutable.HashMap
  * of xml files.
  */
 object Fields {
-  
-  val cache = new RedisCache()
+
+  val (host,port) = Configuration.redis
+  val cache = new RedisCache(host,port.toInt)
 
   def get(req:ServiceRequest):Map[String,(String,String)] = {
     
