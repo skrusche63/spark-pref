@@ -31,6 +31,7 @@ import de.kp.spark.pref.spec.Fields
 
 class EventSource(@transient sc:SparkContext) {
 
+  private val config = Configuration
   private val model = new EventModel(sc)
   
   def eventDS(req:ServiceRequest):RDD[(String,String,String,Int,Long)] = {
@@ -40,16 +41,14 @@ class EventSource(@transient sc:SparkContext) {
 
       case Sources.ELASTIC => {
 
-        val rawset = new ElasticSource(sc).connect(req.data)
+        val rawset = new ElasticSource(sc).connect(config,req)
         model.buildElastic(req,rawset)
       
       }
 
       case Sources.FILE => {
         
-        val path = Configuration.file()._1
-        
-        val rawset = new FileSource(sc).connect(req.data,path)
+        val rawset = new FileSource(sc).connect(config.file(0),req)
         model.buildFile(req,rawset)
         
       }
@@ -58,7 +57,7 @@ class EventSource(@transient sc:SparkContext) {
     
         val fields = Fields.get(req).map(kv => kv._2._1).toList    
          
-        val rawset = new JdbcSource(sc).connect(req.data,fields)
+        val rawset = new JdbcSource(sc).connect(config,req,fields)
         model.buildJDBC(req,rawset)
         
       }

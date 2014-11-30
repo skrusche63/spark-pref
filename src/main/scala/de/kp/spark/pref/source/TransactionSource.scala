@@ -31,6 +31,7 @@ import de.kp.spark.pref.spec.Fields
 
 class TransactionSource(@transient sc:SparkContext) {
 
+  private val config = Configuration
   private val transactionModel = new TransactionModel(sc)
   
   def transDS(req:ServiceRequest):RDD[(String,String,List[(Long,List[Int])])] = {
@@ -40,16 +41,14 @@ class TransactionSource(@transient sc:SparkContext) {
 
       case Sources.ELASTIC => {
         
-        val rawset = new ElasticSource(sc).connect(req.data)
+        val rawset = new ElasticSource(sc).connect(config,req)
         transactionModel.buildElastic(req,rawset)
         
       }
 
       case Sources.FILE => {
-        
-        val path = Configuration.file()._2
 
-        val rawset = new FileSource(sc).connect(req.data,path)
+        val rawset = new FileSource(sc).connect(config.file(1),req)
         transactionModel.buildFile(req,rawset)
         
       }
@@ -58,14 +57,14 @@ class TransactionSource(@transient sc:SparkContext) {
     
         val fields = Fields.get(req).map(kv => kv._2._1).toList    
          
-        val rawset = new JdbcSource(sc).connect(req.data,fields)
+        val rawset = new JdbcSource(sc).connect(config,req,fields)
         transactionModel.buildJDBC(req,rawset)
         
       }
 
       case Sources.PIWIK => {
        
-        val rawset = new PiwikSource(sc).connect(req.data)
+        val rawset = new PiwikSource(sc).connect(config,req)
         transactionModel.buildPiwik(req,rawset)
         
       }
