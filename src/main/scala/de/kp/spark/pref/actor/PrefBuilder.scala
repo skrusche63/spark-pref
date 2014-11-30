@@ -54,7 +54,7 @@ class PrefBuilder(@transient val sc:SparkContext) extends BaseActor {
             
         case result => {
               
-          origin ! Serializer.serializeResponse(result)
+          origin ! result
           context.stop(self)
               
         }
@@ -67,7 +67,7 @@ class PrefBuilder(@transient val sc:SparkContext) extends BaseActor {
               
           val resp = failure(req,throwable.toString)
               
-          origin ! Serializer.serializeResponse(resp)	 
+          origin ! failure(req,throwable.toString)	 
           context.stop(self)
               
         }	  
@@ -81,7 +81,7 @@ class PrefBuilder(@transient val sc:SparkContext) extends BaseActor {
       val origin = sender               
       val msg = Messages.REQUEST_IS_UNKNOWN()          
           
-      origin ! Serializer.serializeResponse(failure(null,msg))
+      origin ! failure(null,msg)
       context.stop(self)
 
     }
