@@ -62,7 +62,7 @@ object FMFormatter extends Serializable {
     
     val sc = ratings.context
     
-    val edict = Events.get
+    val edict = Events.get(req)
     
     val idict = Items.get(req)
     val udict = Users.get(req)
