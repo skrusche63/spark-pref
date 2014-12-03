@@ -54,8 +54,8 @@ class EPrefActor(@transient val sc:SparkContext) extends BaseActor {
 
           req.data("sink") match {
             
-            case Sinks.FILE  => EPrefBuilder.buildToFile(req,dataset)
-            case Sinks.REDIS => EPrefBuilder.buildToRedis(req,dataset)
+            case Sinks.FILE  => EPrefBuilder.ratingsToFile(req,dataset)
+            case Sinks.REDIS => EPrefBuilder.ratingsToRedis(req,dataset)
             
             case _ => {/*do not happen*/}
             

@@ -21,6 +21,7 @@ package de.kp.spark.pref.actor
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
+import de.kp.spark.core.Names
 import de.kp.spark.core.model._
 
 import de.kp.spark.pref.NPrefBuilder
@@ -55,8 +56,8 @@ class NPrefActor(@transient val sc:SparkContext) extends BaseActor {
 
           req.data("sink") match {
             
-            case Sinks.FILE  => NPrefBuilder.buildToFile(req,dataset)
-            case Sinks.REDIS => NPrefBuilder.buildToRedis(req,dataset)
+            case Sinks.FILE  => NPrefBuilder.ratingsToFile(req,dataset)
+            case Sinks.REDIS => NPrefBuilder.ratingsToRedis(req,dataset)
             
             case _ => {/*do not happen*/}
             
@@ -93,10 +94,10 @@ class NPrefActor(@transient val sc:SparkContext) extends BaseActor {
    */
   private def properties(req:ServiceRequest):Boolean = {
     
-    if (req.data.contains("uid") == false) return false
-    if (req.data.contains("sink") == false) return false
+    if (req.data.contains(Names.REQ_UID) == false) return false
+    if (req.data.contains(Names.REQ_SINK) == false) return false
     
-    if (Sinks.isSink(req.data("sink")) == false) return false
+    if (Sinks.isSink(req.data(Names.REQ_SINK)) == false) return false
     
     true    
     

@@ -19,12 +19,76 @@ package de.kp.spark.pref.format
 */
 
 import org.apache.spark.rdd.RDD
+
+import de.kp.spark.core.Names
+
 import de.kp.spark.core.model._
+import de.kp.spark.core.redis.RedisClient
+
+import de.kp.spark.pref.Configuration
+
+import org.joda.time.DateTime
+import scala.collection.mutable.Buffer
 
 object FMFormatter extends Serializable {
-        
-  private val DAY = 24 * 60 * 60 * 1000 // day in milliseconds
 
+  val (host,port) = Configuration.redis
+  val client = RedisClient(host,port.toInt)
+ 
+  /**
+   * This method determines the field names of the feature vector 
+   * and registers these names in the Redis instance; 
+   */
+  def fields(req:ServiceRequest) {
+    
+    require(req.data.contains(Names.REQ_NAME) && req.data.contains(Names.REQ_UID))
+
+    val edict = Events.get(req)
+    
+    val idict = Items.get(req)
+    val udict = Users.get(req)
+    
+    /* Field names to specify active users */
+    val ublock = udict.getTerms
+    ublock.foreach(name => addField(req,Field(name,"double","")))
+
+    /*Field names to specify active items */
+    val iblock = idict.getTerms    
+    iblock.foreach(name => addField(req,Field(name,"double","")))
+   
+    /* Field names to specify rated items */
+    iblock.foreach(name => addField(req,Field(name,"double","")))
+    
+    /* Field names to specify the day of the week */
+    val dblock = Range(1,8).map(_.toString)
+    dblock.foreach(name => addField(req,Field(name,"double","")))
+    
+    /* Field names to specify the hour of the day */
+    val hblock = Range(0,24).map(_.toString)
+    hblock.foreach(name => addField(req,Field(name,"double","")))
+    
+    /* Field names that specify the events */
+    val eblock = edict.getTerms
+    eblock.foreach(name => addField(req,Field(name,"double","")))
+    
+    /* Field names to specify items rated before */
+    iblock.foreach(name => addField(req,Field(name,"double","")))
+    
+  }
+  
+  /** 
+   *  Add a single field specification that refers to a named
+   *  training or model build task
+   */
+  private def addField(req:ServiceRequest,field:Field) {
+    
+    val k = "fields:" + req.data(Names.REQ_NAME) + ":" + req.data(Names.REQ_UID)
+    val v = String.format("""%s:%s:%s""",field.name,field.datatype,field.value)
+    
+    client.rpush(k,v)
+    
+  }
+  
   /**
    * This method transforms a tuple of (user,item,rating,timestamp,event) into
    * a feature vector that can be used to train a factorization model.
@@ -50,7 +114,8 @@ object FMFormatter extends Serializable {
    * the rating of the active item; this also requires to have access onto some
    * historical data of the active user
    *         
-   * e) datetime block of user-item-rating (should be a single column)
+   * e) datetime blocks of user-item-rating distinguish between day of week and
+   * hour of day
    * 
    * Hypothesis: The datetime of the respective user-item-rating influences the
    * rating of the active items
@@ -113,13 +178,23 @@ object FMFormatter extends Serializable {
         
         /* Build event block */
         val eblock = eventBlock(event.toString,b_edict.value)
-        /*
-         * Build time block: we do not use the exact timestamp
-         * here as ratings within the same day are considered
-         * to be equal 
-         */
-        val day = (timestamp / DAY).toDouble
-        val tblock = Array.fill[Double](1)(day)
+
+        /* Day of week block (1..7) */
+        val date = new java.util.Date()
+        date.setTime(timestamp)
+        
+        val datetime = new DateTime(date)
+        val dayOfWeek = datetime.dayOfWeek().get
+
+        val dblock = Array.fill[Double](1)(7)
+        dblock(dayOfWeek) = 1
+        
+        /* Hour of day block (0..23) */
+        val hourOfDay = datetime.hourOfDay().get
+ 
+        val hblock = Array.fill[Double](1)(24)
+        hblock(hourOfDay) = 1
+       
         /* 
          * Determine the item that has been rated just 
          * before the active item
@@ -130,7 +205,7 @@ object FMFormatter extends Serializable {
         val bblock = beforeItemBlock(before,b_idict.value)
         
         /* Build feature vector */
-        val features = ublock ++ iblock ++ oblock ++ tblock ++ eblock ++ bblock
+        val features = ublock ++ iblock ++ oblock ++ dblock ++ hblock ++ eblock ++ bblock
         
         /* Build target variable */
         val target = rating.toDouble
@@ -213,12 +288,4 @@ object FMFormatter extends Serializable {
     
   }
  
-  def main(args:Array[String]) {
-    
-    val u = Array(1,2,3)
-    val v = Array(4,5,6)
-    
-    val w = u ++ v
-    
-  }
 }

@@ -21,7 +21,7 @@ package de.kp.spark.pref.sink
 import de.kp.spark.core.redis.RedisClient
 import de.kp.spark.pref.Configuration
 
-object RedisSink extends Serializable {
+class RedisSink extends Serializable {
 
   val (host,port) = Configuration.redis
   val client = RedisClient(host,port.toInt)

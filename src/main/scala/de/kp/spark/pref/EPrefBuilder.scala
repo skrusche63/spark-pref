@@ -21,37 +21,66 @@ package de.kp.spark.pref
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext._
 
+import de.kp.spark.core.Names
+
 import de.kp.spark.core.model._
 import de.kp.spark.pref.sink.RedisSink
 
-import de.kp.spark.pref.model._
+import de.kp.spark.pref.model.Formats
 
 import de.kp.spark.pref.format.FMFormatter
 import de.kp.spark.pref.util.EventScoreBuilder
 
 object EPrefBuilder extends Serializable {
 
-  def buildToFile(req:ServiceRequest,rawset:RDD[(String,String,String,Int,Long)]) {
+  private val sink = new RedisSink()
+  
+  /**
+   * This method saves event-based ratings as file on a Hadoop file system; to this
+   * end it is distinguished between requests that have specified a certain format,
+   * and those where no format is provided.
+   */
+  def ratingsToFile(req:ServiceRequest,rawset:RDD[(String,String,String,Int,Long)]) {
     
     val ratings = buildRatings(rawset)
-    if (req.data.contains("format")) {
+    if (req.data.contains(Names.REQ_FORMAT)) {
        
-      val format = req.data("format")
-      if (Formats.isFormat(format)) {
+      val format = req.data(Names.REQ_FORMAT)
+      format match {
         
-        val formatted = FMFormatter.format(req,ratings)
-        val stringified = formatted.map(record => {
+        case Formats.FM => {
           
-          val target = record._1
-          val features = record._2
+          /*
+           * STEP #1: Register columns or fields of event-based feature vector in a Redis
+           * instance; this field specification is used by the Context-Aware Analysis engine 
+           * (later one) 
+           */
+          FMFormatter.fields(req)
+          /*
+           * STEP #2: Save ratings in binary feature format as file on a Hadoop file system;
+           * the respective path must be configured and, in case of the recommender system
+           * shared with the Context-Aware Analysis engine          
+           */          
+          val formatted = FMFormatter.format(req,ratings)
+          val stringified = formatted.map(record => {
           
-          "" + target + "," + features.mkString(" ")
+            val target = record._1
+            val features = record._2
+            /*
+             * This is the string format of a targeted point required by the Context-Aware
+             * Analysis engine; the 'rating' variable is set as 'target' variable and all
+             * other (feature) variables as predictors
+             */
+            "" + target + "," + features.mkString(" ")
           
-        })
+          })
     
-        val path = Configuration.output("event")
-        stringified.saveAsTextFile(path)
+          val path = Configuration.output("event")
+          stringified.saveAsTextFile(path)
+          
+        }
         
+        case _ => throw new Exception("Format is not supported.")
       }
       
     } else {
@@ -70,24 +99,46 @@ object EPrefBuilder extends Serializable {
     
   }
   
-  def buildToRedis(req:ServiceRequest,rawset:RDD[(String,String,String,Int,Long)]) {
+  def ratingsToRedis(req:ServiceRequest,rawset:RDD[(String,String,String,Int,Long)]) {
     
     val ratings = buildRatings(rawset)
-    if (req.data.contains("format")) {
+    if (req.data.contains(Names.REQ_FORMAT)) {
        
-      val format = req.data("format")
-      if (Formats.isFormat(format)) {
+      val format = req.data(Names.REQ_FORMAT)
+       format match {
         
-        val formatted = FMFormatter.format(req,ratings)
-        formatted.foreach(record => {
+        case Formats.FM => {
           
-          val target = record._1
-          val features = record._2
+          /*
+           * STEP #1: Register columns or fields of event-based feature vector in a Redis
+           * instance; this field specification is used by the Context-Aware Analysis engine 
+           * (later one) 
+           */
+          FMFormatter.fields(req)
+          /*
+           * STEP #2: Save ratings in binary feature format as file on a Hadoop file system;
+           * the respective path must be configured and, in case of the recommender system
+           * shared with the Context-Aware Analysis engine          
+           */          
+          val formatted = FMFormatter.format(req,ratings)
+          formatted.foreach(record => {
           
-          val text = "" + target + "," + features.mkString(" ")
-          RedisSink.addRating(req.data("uid"), text)          
+            val target = record._1
+            val features = record._2
+            /*
+             * This is the string format of a targeted point required by the Context-Aware
+             * Analysis engine; the 'rating' variable is set as 'target' variable and all
+             * other (feature) variables as predictors
+             */
+            val text = "" + target + "," + features.mkString(" ")
+            sink.addRating(req.data(Names.REQ_UID), text)          
+          
+          })
+          
+        }
         
-        })
+        case _ => throw new Exception("Format is not supported.")
+
       }
       
     } else {
@@ -97,7 +148,7 @@ object EPrefBuilder extends Serializable {
         val (site,user,item,rating,timestamp,event) = record
         val text = List(site,user,item,rating.toString,timestamp.toString,event.toString).mkString(",")
         
-        RedisSink.addRating(req.data("uid"), text)
+        sink.addRating(req.data(Names.REQ_UID), text)
 
       })
     

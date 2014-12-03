@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>spark-prefs</groupId>
   <artifactId>spark-pref</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.0.1</version>
   <name>Spark-Pref</name>
   <inceptionYear>2010</inceptionYear>
   <licenses>
@@ -157,6 +157,19 @@
       <version>2.5.2</version>
     </dependency>
     
+    <!--  jodatime -->
+    <dependency>
+	  <groupId>joda-time</groupId>
+	  <artifactId>joda-time</artifactId>
+	  <version>2.5</version>
+    </dependency>  
+
+    <dependency>
+	  <groupId>org.joda</groupId>
+	  <artifactId>joda-convert</artifactId>
+	  <version>1.2</version>
+    </dependency>
+    
   </dependencies>
   
   <repositories>
@@ -218,4 +231,5 @@
   	<name>Dr. Krusche &amp; Partner PartG</name>
   	<url>http://dr-kruscheundpartner.com</url>
   </organization>
+  <url>https://github.com/skrusche63/spark-pref</url>
 </project>

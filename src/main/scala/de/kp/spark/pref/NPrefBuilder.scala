@@ -35,6 +35,8 @@ import scala.collection.mutable.Buffer
  */
 object NPrefBuilder extends Serializable {
 
+  private val sink = new RedisSink()
+  
   /**
    * The NPrefBuilder supports the following input format: (site,user,groups).
    * 
@@ -46,7 +48,7 @@ object NPrefBuilder extends Serializable {
    * as an ecommerce order or transaction etc.
    * 
    */  
-  def buildToFile(req:ServiceRequest,rawset:RDD[(String,String,List[(Long,List[Int])])]) {
+  def ratingsToFile(req:ServiceRequest,rawset:RDD[(String,String,List[(Long,List[Int])])]) {
     
     val nprefs = buildRatings(rawset)
     
@@ -55,10 +57,10 @@ object NPrefBuilder extends Serializable {
     
   }
   
-   def buildToRedis(req:ServiceRequest,rawset:RDD[(String,String,List[(Long,List[Int])])]) {
+   def ratingsToRedis(req:ServiceRequest,rawset:RDD[(String,String,List[(Long,List[Int])])]) {
     
     val nprefs = buildRatings(rawset)
-    nprefs.foreach(rating => RedisSink.addRating(req.data("uid"),rating))
+    nprefs.foreach(rating => sink.addRating(req.data("uid"),rating))
     
   }
  
