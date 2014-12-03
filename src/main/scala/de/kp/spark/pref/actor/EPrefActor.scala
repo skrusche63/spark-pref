@@ -21,6 +21,7 @@ package de.kp.spark.pref.actor
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
+import de.kp.spark.core.Names
 import de.kp.spark.core.model._
 
 import de.kp.spark.pref.EPrefBuilder
@@ -45,7 +46,7 @@ class EPrefActor(@transient val sc:SparkContext) extends BaseActor {
 
       if (missing == false) {
         
-        cache.addStatus(req,ResponseStatus.BUILDING_STARTED)
+        cache.addStatus(req,ResponseStatus.RATING_BUILDING_STARTED)
  
         try {
           
@@ -61,10 +62,10 @@ class EPrefActor(@transient val sc:SparkContext) extends BaseActor {
             
           }
 
-          cache.addStatus(req,ResponseStatus.BUILDING_FINISHED)
+          cache.addStatus(req,ResponseStatus.RATING_BUILDING_FINISHED)
     
           /* Notify potential listeners */
-          notify(req,ResponseStatus.BUILDING_FINISHED)
+          notify(req,ResponseStatus.RATING_BUILDING_FINISHED)
           
         } catch {
           case e:Exception => cache.addStatus(req,ResponseStatus.FAILURE)          
@@ -91,10 +92,10 @@ class EPrefActor(@transient val sc:SparkContext) extends BaseActor {
    */
   private def properties(req:ServiceRequest):Boolean = {
     
-    if (req.data.contains("uid") == false) return false
-    if (req.data.contains("sink") == false) return false
+    if (req.data.contains(Names.REQ_UID) == false) return false
+    if (req.data.contains(Names.REQ_SINK) == false) return false
     
-    if (Sinks.isSink(req.data("sink")) == false) return false
+    if (Sinks.isSink(req.data(Names.REQ_SINK)) == false) return false
     
     true    
     

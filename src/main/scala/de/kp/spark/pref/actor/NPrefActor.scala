@@ -47,7 +47,7 @@ class NPrefActor(@transient val sc:SparkContext) extends BaseActor {
 
       if (missing == false) {
         
-        cache.addStatus(req,ResponseStatus.BUILDING_STARTED)
+        cache.addStatus(req,ResponseStatus.RATING_BUILDING_STARTED)
  
         try {
           
@@ -63,10 +63,10 @@ class NPrefActor(@transient val sc:SparkContext) extends BaseActor {
             
           }
 
-          cache.addStatus(req,ResponseStatus.BUILDING_FINISHED)
+          cache.addStatus(req,ResponseStatus.RATING_BUILDING_FINISHED)
     
           /* Notify potential listeners */
-          notify(req,ResponseStatus.BUILDING_FINISHED)
+          notify(req,ResponseStatus.RATING_BUILDING_FINISHED)
           
         } catch {
           case e:Exception => cache.addStatus(req,ResponseStatus.FAILURE)          
