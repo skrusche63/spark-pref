@@ -17,14 +17,13 @@ package de.kp.spark.pref
 * 
 * If not, see <http://www.gnu.org/licenses/>.
 */
-
+import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+
 import org.apache.spark.SparkContext._
 
 import de.kp.spark.core.model._
-import de.kp.spark.pref.sink.RedisSink
-
-import de.kp.spark.pref.model._
+import de.kp.spark.pref.format.{Items,Users,Ratings}
 
 import scala.collection.mutable.Buffer
 
@@ -33,9 +32,7 @@ import scala.collection.mutable.Buffer
  * implicit preferences of a certain user for a specific
  * item
  */
-object NPrefBuilder extends Serializable {
-
-  private val sink = new RedisSink()
+class NPrefBuilder(@transient sc:SparkContext) extends Serializable {
   
   /**
    * The NPrefBuilder supports the following input format: (site,user,groups).
@@ -51,23 +48,57 @@ object NPrefBuilder extends Serializable {
   def ratingsToFile(req:ServiceRequest,rawset:RDD[(String,String,List[(Long,List[Int])])]) {
     
     val nprefs = buildRatings(rawset)
+    /*
+     * Check whether users already exist for the referenced mining or building
+     * task and associated model or matrix name
+     */
+    if (Users.exists(req) == false) {
+      val busers = sc.broadcast(Users)
+      nprefs.foreach(x => busers.value.put(req,x._2))
     
-    val path = Configuration.output("trans")
-    nprefs.saveAsTextFile(path)
+    } 
+    /*
+     * Check whether items already exist for the referenced mining or building
+     * task and associated model or matrix name
+     */
+    if (Items.exists(req) == false) {
+      val bitems = sc.broadcast(Items)
+      nprefs.foreach(x => bitems.value.put(req,x._3.toString))    
+    } 
+
+    val path = Configuration.output("item")    
+    nprefs.map(x => List(x._1,x._2,x._3.toString,x._4.toString).mkString(",")).saveAsTextFile(path)
     
   }
   
    def ratingsToRedis(req:ServiceRequest,rawset:RDD[(String,String,List[(Long,List[Int])])]) {
     
     val nprefs = buildRatings(rawset)
-    nprefs.foreach(rating => sink.addRating(req.data("uid"),rating))
+    /*
+     * Check whether users already exist for the referenced mining or building
+     * task and associated model or matrix name
+     */
+    if (Users.exists(req) == false) {
+      val busers = sc.broadcast(Users)
+      nprefs.foreach(x => busers.value.put(req,x._2))
+    
+    } 
+    /*
+     * Check whether items already exist for the referenced mining or building
+     * task and associated model or matrix name
+     */
+    if (Items.exists(req) == false) {
+      val bitems = sc.broadcast(Items)
+      nprefs.foreach(x => bitems.value.put(req,x._3.toString))    
+    } 
+
+    val bratings = sc.broadcast(Ratings)
+    nprefs.foreach(x => bratings.value.put(req,List(x._1,x._2,x._3.toString,x._4.toString).mkString(",")))
     
   }
  
-  private def buildRatings(rawset:RDD[(String,String,List[(Long,List[Int])])]):RDD[String] = {
-    
-    val sc = rawset.context
-
+  private def buildRatings(rawset:RDD[(String,String,List[(Long,List[Int])])]):RDD[(String,String,Int,Int)] = {
+ 
     val userItems = rawset.map(data => {
      
       val (site,user,groups) = data
@@ -150,7 +181,7 @@ object NPrefBuilder extends Serializable {
         val mpref = bcprefs.value(item)
         
         val npref = Math.round( 5* (pref.toDouble / mpref.toDouble) ).toInt
-        List(site,user,item.toString,npref.toString).mkString(",")
+        (site,user,item,npref)
         
       })
       

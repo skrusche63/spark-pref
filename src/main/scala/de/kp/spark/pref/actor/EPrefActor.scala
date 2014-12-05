@@ -33,8 +33,9 @@ import de.kp.spark.pref.model._
  * The EPrefActor is responsible for preferences built from
  * customer engagement events or sequences
  */
-class EPrefActor(@transient val sc:SparkContext) extends BaseActor {
+class EPrefActor(@transient sc:SparkContext) extends BaseActor {
   
+  private val builder = new EPrefBuilder(sc)
   def receive = {
 
     case req:ServiceRequest => {
@@ -55,8 +56,8 @@ class EPrefActor(@transient val sc:SparkContext) extends BaseActor {
 
           req.data("sink") match {
             
-            case Sinks.FILE  => EPrefBuilder.ratingsToFile(req,dataset)
-            case Sinks.REDIS => EPrefBuilder.ratingsToRedis(req,dataset)
+            case Sinks.FILE  => builder.ratingsToFile(req,dataset)
+            case Sinks.REDIS => builder.ratingsToRedis(req,dataset)
             
             case _ => {/*do not happen*/}
             

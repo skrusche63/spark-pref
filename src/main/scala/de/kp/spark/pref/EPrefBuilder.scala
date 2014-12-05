@@ -18,22 +18,22 @@ package de.kp.spark.pref
  * If not, see <http://www.gnu.org/licenses/>.
  */
 
+import org.apache.spark.SparkContext
+
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext._
 
 import de.kp.spark.core.Names
 
 import de.kp.spark.core.model._
-import de.kp.spark.pref.sink.RedisSink
+import de.kp.spark.pref.format.{Items,Users,Ratings}
 
 import de.kp.spark.pref.model.Formats
 
 import de.kp.spark.pref.format.FMFormatter
 import de.kp.spark.pref.util.EventScoreBuilder
 
-object EPrefBuilder extends Serializable {
-
-  private val sink = new RedisSink()
+class EPrefBuilder(@transient sc:SparkContext) extends Serializable {
   
   /**
    * This method saves event-based ratings as file on a Hadoop file system; to this
@@ -43,6 +43,24 @@ object EPrefBuilder extends Serializable {
   def ratingsToFile(req:ServiceRequest,rawset:RDD[(String,String,String,Int,Long)]) {
     
     val ratings = buildRatings(rawset)
+    /*
+     * Check whether users already exist for the referenced mining or building
+     * task and associated model or matrix name
+     */
+    if (Users.exists(req) == false) {
+      val busers = sc.broadcast(Users)
+      ratings.foreach(x => busers.value.put(req,x._2))
+    
+    } 
+    /*
+     * Check whether items already exist for the referenced mining or building
+     * task and associated model or matrix name
+     */
+    if (Items.exists(req) == false) {
+      val bitems = sc.broadcast(Items)
+      ratings.foreach(x => bitems.value.put(req,x._3.toString))    
+    } 
+
     if (req.data.contains(Names.REQ_FORMAT)) {
        
       val format = req.data(Names.REQ_FORMAT)
@@ -102,6 +120,24 @@ object EPrefBuilder extends Serializable {
   def ratingsToRedis(req:ServiceRequest,rawset:RDD[(String,String,String,Int,Long)]) {
     
     val ratings = buildRatings(rawset)
+    /*
+     * Check whether users already exist for the referenced mining or building
+     * task and associated model or matrix name
+     */
+    if (Users.exists(req) == false) {
+      val busers = sc.broadcast(Users)
+      ratings.foreach(x => busers.value.put(req,x._2))
+    
+    } 
+    /*
+     * Check whether items already exist for the referenced mining or building
+     * task and associated model or matrix name
+     */
+    if (Items.exists(req) == false) {
+      val bitems = sc.broadcast(Items)
+      ratings.foreach(x => bitems.value.put(req,x._3.toString))    
+    } 
+
     if (req.data.contains(Names.REQ_FORMAT)) {
        
       val format = req.data(Names.REQ_FORMAT)
@@ -121,6 +157,8 @@ object EPrefBuilder extends Serializable {
            * shared with the Context-Aware Analysis engine          
            */          
           val formatted = FMFormatter.format(req,ratings)
+          
+          val bratings = sc.broadcast(Ratings)
           formatted.foreach(record => {
           
             val target = record._1
@@ -131,7 +169,7 @@ object EPrefBuilder extends Serializable {
              * other (feature) variables as predictors
              */
             val text = "" + target + "," + features.mkString(" ")
-            sink.addRating(req.data(Names.REQ_UID), text)          
+            bratings.value.put(req, text)          
           
           })
           
@@ -143,12 +181,13 @@ object EPrefBuilder extends Serializable {
       
     } else {
       
+      val bratings = sc.broadcast(Ratings)
       ratings.foreach(record => {
         
         val (site,user,item,rating,timestamp,event) = record
         val text = List(site,user,item,rating.toString,timestamp.toString,event.toString).mkString(",")
         
-        sink.addRating(req.data(Names.REQ_UID), text)
+        bratings.value.put(req, text)
 
       })
     

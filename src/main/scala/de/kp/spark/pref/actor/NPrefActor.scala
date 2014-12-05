@@ -34,8 +34,9 @@ import de.kp.spark.pref.model._
  * these describe the relationship between users and items
  * without any contextual information taken into account 
  */
-class NPrefActor(@transient val sc:SparkContext) extends BaseActor {
+class NPrefActor(@transient sc:SparkContext) extends BaseActor {
   
+  private val builder = new NPrefBuilder(sc)
   def receive = {
 
     case req:ServiceRequest => {
@@ -56,8 +57,8 @@ class NPrefActor(@transient val sc:SparkContext) extends BaseActor {
 
           req.data("sink") match {
             
-            case Sinks.FILE  => NPrefBuilder.ratingsToFile(req,dataset)
-            case Sinks.REDIS => NPrefBuilder.ratingsToRedis(req,dataset)
+            case Sinks.FILE  => builder.ratingsToFile(req,dataset)
+            case Sinks.REDIS => builder.ratingsToRedis(req,dataset)
             
             case _ => {/*do not happen*/}
             

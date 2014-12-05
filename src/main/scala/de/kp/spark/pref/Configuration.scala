@@ -86,9 +86,9 @@ object Configuration extends Serializable with CoreConf {
     val cfg = config.getConfig("output")
     
     val event = cfg.getString("event.model")
-    val trans = cfg.getString("trans.model")
+    val item  = cfg.getString("item.model")
     
-    Map("event" -> event, "trans" -> trans)
+    Map("event" -> event, "item" -> item)
     
   }
   
