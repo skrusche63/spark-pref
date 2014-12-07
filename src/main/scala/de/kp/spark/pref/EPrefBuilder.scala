@@ -36,7 +36,21 @@ import de.kp.spark.pref.util.EventScoreBuilder
 class EPrefBuilder(@transient sc:SparkContext) extends Serializable {
 
   def ratingsToFileExplicit(req:ServiceRequest,rawset:RDD[(String,String,String,Int,Double,Long)]) {
-    // TODO
+    
+    val ratings = rawset.map(x => {
+      val (site,user,item,event,score,timestamp) = x
+      (site,user,item,score,timestamp,event)
+    })
+
+    ratingsToFile(req,ratings)
+    
+  }
+  
+  def ratingsToFileImplicit(req:ServiceRequest,rawset:RDD[(String,String,String,Int,Long)]) {
+    
+    val ratings = buildRatings(rawset)
+    ratingsToFile(req,ratings)
+    
   }
   
   /**
@@ -44,9 +58,8 @@ class EPrefBuilder(@transient sc:SparkContext) extends Serializable {
    * end it is distinguished between requests that have specified a certain format,
    * and those where no format is provided.
    */
-  def ratingsToFileImplicit(req:ServiceRequest,rawset:RDD[(String,String,String,Int,Long)]) {
-    
-    val ratings = buildRatings(rawset)
+  private def ratingsToFile(req:ServiceRequest,ratings:RDD[(String,String,String,Double,Long,Int)]) {
+
     /*
      * Check whether users already exist for the referenced mining or building
      * task and associated model or matrix name
@@ -120,14 +133,30 @@ class EPrefBuilder(@transient sc:SparkContext) extends Serializable {
     }
     
   }
-
   def ratingsToRedisExplicit(req:ServiceRequest,rawset:RDD[(String,String,String,Int,Double,Long)]) {
-    // TODO
-  }
+    
+    val ratings = rawset.map(x => {
+      val (site,user,item,event,score,timestamp) = x
+      (site,user,item,score,timestamp,event)
+    })
+
+    ratingsToRedis(req,ratings)
+    
+   }
   
   def ratingsToRedisImplicit(req:ServiceRequest,rawset:RDD[(String,String,String,Int,Long)]) {
     
     val ratings = buildRatings(rawset)
+    ratingsToRedis(req,ratings)
+  
+  }
+  
+  /**
+   * This method saves event-based ratings to a Redis database; to this end it is 
+   * distinguished between requests that have specified a certain format, and those 
+   * where no format is provided.
+   */
+  private def ratingsToRedis(req:ServiceRequest,ratings:RDD[(String,String,String,Double,Long,Int)]) {
     /*
      * Check whether users already exist for the referenced mining or building
      * task and associated model or matrix name
@@ -200,10 +229,10 @@ class EPrefBuilder(@transient sc:SparkContext) extends Serializable {
       })
     
     }
-  
+    
   }
   
-  private def buildRatings(rawset:RDD[(String,String,String,Int,Long)]):RDD[(String,String,String,Int,Long,Int)] = {
+  private def buildRatings(rawset:RDD[(String,String,String,Int,Long)]):RDD[(String,String,String,Double,Long,Int)] = {
    
     /* Group extracted data by site, user and item */
     val grouped = rawset.groupBy(x => (x._1,x._2,x._3))

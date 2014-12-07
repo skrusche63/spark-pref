@@ -35,7 +35,27 @@ import scala.collection.mutable.Buffer
 class NPrefBuilder(@transient sc:SparkContext) extends Serializable {
 
   def ratingsToFileExplicit(req:ServiceRequest,rawset:RDD[(String,String,Int,Double,Long)]) {
-    // TODO
+    /*
+     * Check whether users already exist for the referenced mining or building
+     * task and associated model or matrix name
+     */
+    if (Users.exists(req) == false) {
+      val busers = sc.broadcast(Users)
+      rawset.foreach(x => busers.value.put(req,x._2))
+    
+    } 
+    /*
+     * Check whether items already exist for the referenced mining or building
+     * task and associated model or matrix name
+     */
+    if (Items.exists(req) == false) {
+      val bitems = sc.broadcast(Items)
+      rawset.foreach(x => bitems.value.put(req,x._3.toString))    
+    } 
+ 
+    val path = Configuration.output("item")    
+    rawset.map(x => List(x._1,x._2,x._3.toString,x._4.toString).mkString(",")).saveAsTextFile(path)
+
   }
   
   /**
@@ -76,7 +96,27 @@ class NPrefBuilder(@transient sc:SparkContext) extends Serializable {
   }
 
   def ratingsToRedisExplicit(req:ServiceRequest,rawset:RDD[(String,String,Int,Double,Long)]) {
-    // TODO
+    /*
+     * Check whether users already exist for the referenced mining or building
+     * task and associated model or matrix name
+     */
+    if (Users.exists(req) == false) {
+      val busers = sc.broadcast(Users)
+      rawset.foreach(x => busers.value.put(req,x._2))
+    
+    } 
+    /*
+     * Check whether items already exist for the referenced mining or building
+     * task and associated model or matrix name
+     */
+    if (Items.exists(req) == false) {
+      val bitems = sc.broadcast(Items)
+      rawset.foreach(x => bitems.value.put(req,x._3.toString))    
+    } 
+ 
+    val path = Configuration.output("item")    
+    rawset.map(x => List(x._1,x._2,x._3.toString,x._4.toString).mkString(",")).saveAsTextFile(path)
+    
   }
   
   def ratingsToRedisImplicit(req:ServiceRequest,rawset:RDD[(String,String,List[(Long,List[Int])])]) {

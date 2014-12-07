@@ -90,7 +90,7 @@ object EventFormatter extends Serializable {
   }
   
   /**
-   * This method transforms a tuple of (user,item,rating,timestamp,event) into
+   * This method transforms a tuple of (site,user,item,rating,timestamp,event) into
    * a feature vector that can be used to train a factorization model.
    * 
    * The feature vector has the following architecture:
@@ -123,7 +123,7 @@ object EventFormatter extends Serializable {
    * f) event block of user-item-rating (should be a single column)
    * 
    */
-  def format(req:ServiceRequest,ratings:RDD[(String,String,String,Int,Long,Int)]):RDD[(Double,Array[Double])] = {
+  def format(req:ServiceRequest,ratings:RDD[(String,String,String,Double,Long,Int)]):RDD[(Double,Array[Double])] = {
     
     val sc = ratings.context
     
@@ -208,7 +208,7 @@ object EventFormatter extends Serializable {
         val features = ublock ++ iblock ++ oblock ++ dblock ++ hblock ++ eblock ++ bblock
         
         /* Build target variable */
-        val target = rating.toDouble
+        val target = rating
         
         (target,features)
         
