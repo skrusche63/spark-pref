@@ -34,7 +34,7 @@ class TransactionSource(@transient sc:SparkContext) {
   private val config = Configuration
   private val transactionModel = new TransactionModel(sc)
   
-  def transDS(req:ServiceRequest):RDD[(String,String,List[(Long,List[Int])])] = {
+  def explicitDS(req:ServiceRequest):RDD[(String,String,Int,Double,Long)] = {
     
     val source = req.data("source")
     source match {
@@ -42,14 +42,14 @@ class TransactionSource(@transient sc:SparkContext) {
       case Sources.ELASTIC => {
         
         val rawset = new ElasticSource(sc).connect(config,req)
-        transactionModel.buildElastic(req,rawset)
+        transactionModel.buildElasticExplicit(req,rawset)
         
       }
 
       case Sources.FILE => {
 
         val rawset = new FileSource(sc).connect(config.file(1),req)
-        transactionModel.buildFile(req,rawset)
+        transactionModel.buildFileExplicit(req,rawset)
         
       }
 
@@ -58,14 +58,41 @@ class TransactionSource(@transient sc:SparkContext) {
         val fields = Fields.get(req).map(kv => kv._2._1).toList    
          
         val rawset = new JdbcSource(sc).connect(config,req,fields)
-        transactionModel.buildJDBC(req,rawset)
+        transactionModel.buildJDBCExplicit(req,rawset)
+        
+      }
+            
+      case _ => null
+      
+   }
+
+  }
+  
+  def implicitDS(req:ServiceRequest):RDD[(String,String,List[(Long,List[Int])])] = {
+    
+    val source = req.data("source")
+    source match {
+
+      case Sources.ELASTIC => {
+        
+        val rawset = new ElasticSource(sc).connect(config,req)
+        transactionModel.buildElasticImplicit(req,rawset)
         
       }
 
-      case Sources.PIWIK => {
-       
-        val rawset = new PiwikSource(sc).connect(config,req)
-        transactionModel.buildPiwik(req,rawset)
+      case Sources.FILE => {
+
+        val rawset = new FileSource(sc).connect(config.file(1),req)
+        transactionModel.buildFileImplicit(req,rawset)
+        
+      }
+
+      case Sources.JDBC => {
+    
+        val fields = Fields.get(req).map(kv => kv._2._1).toList    
+         
+        val rawset = new JdbcSource(sc).connect(config,req,fields)
+        transactionModel.buildJDBCImplicit(req,rawset)
         
       }
             

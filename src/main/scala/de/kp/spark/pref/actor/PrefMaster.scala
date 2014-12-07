@@ -25,6 +25,8 @@ import akka.pattern.ask
 import akka.util.Timeout
 
 import akka.actor.{OneForOneStrategy, SupervisorStrategy}
+
+import de.kp.spark.core.actor._
 import de.kp.spark.core.model._
 
 import de.kp.spark.pref.Configuration
@@ -90,7 +92,7 @@ class PrefMaster(@transient val sc:SparkContext) extends BaseActor {
     worker match {
   
       case "builder" => context.actorOf(Props(new PrefBuilder(sc)))
-      case "monitor" => context.actorOf(Props(new PrefMonitor()))
+      case "monitor" => context.actorOf(Props(new StatusQuestor(Configuration)))
       
       case _ => null
       

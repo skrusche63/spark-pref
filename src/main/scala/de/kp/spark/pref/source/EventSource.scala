@@ -33,8 +33,8 @@ class EventSource(@transient sc:SparkContext) {
 
   private val config = Configuration
   private val model = new EventModel(sc)
-  
-  def eventDS(req:ServiceRequest):RDD[(String,String,String,Int,Long)] = {
+   
+  def explicitDS(req:ServiceRequest):RDD[(String,String,String,Int,Double,Long)] = {
     
     val source = req.data("source")
     source match {
@@ -42,14 +42,14 @@ class EventSource(@transient sc:SparkContext) {
       case Sources.ELASTIC => {
 
         val rawset = new ElasticSource(sc).connect(config,req)
-        model.buildElastic(req,rawset)
+        model.buildElasticExplicit(req,rawset)
       
       }
 
       case Sources.FILE => {
         
         val rawset = new FileSource(sc).connect(config.file(0),req)
-        model.buildFile(req,rawset)
+        model.buildFileExplicit(req,rawset)
         
       }
 
@@ -58,12 +58,42 @@ class EventSource(@transient sc:SparkContext) {
         val fields = Fields.get(req).map(kv => kv._2._1).toList    
          
         val rawset = new JdbcSource(sc).connect(config,req,fields)
-        model.buildJDBC(req,rawset)
+        model.buildJDBCExplicit(req,rawset)
+        
+      }
+            
+      case _ => null
+      
+   }
+
+  }
+ 
+  def implicitDS(req:ServiceRequest):RDD[(String,String,String,Int,Long)] = {
+    
+    val source = req.data("source")
+    source match {
+
+      case Sources.ELASTIC => {
+
+        val rawset = new ElasticSource(sc).connect(config,req)
+        model.buildElasticImplicit(req,rawset)
+      
+      }
+
+      case Sources.FILE => {
+        
+        val rawset = new FileSource(sc).connect(config.file(0),req)
+        model.buildFileImplicit(req,rawset)
         
       }
 
-      case Sources.PIWIK => {
-        null
+      case Sources.JDBC => {
+    
+        val fields = Fields.get(req).map(kv => kv._2._1).toList    
+         
+        val rawset = new JdbcSource(sc).connect(config,req,fields)
+        model.buildJDBCImplicit(req,rawset)
+        
       }
             
       case _ => null

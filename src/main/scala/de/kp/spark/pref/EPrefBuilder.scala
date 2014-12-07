@@ -30,17 +30,21 @@ import de.kp.spark.pref.format.{Items,Users,Ratings}
 
 import de.kp.spark.pref.model.Formats
 
-import de.kp.spark.pref.format.FMFormatter
+import de.kp.spark.pref.format.EventFormatter
 import de.kp.spark.pref.util.EventScoreBuilder
 
 class EPrefBuilder(@transient sc:SparkContext) extends Serializable {
+
+  def ratingsToFileExplicit(req:ServiceRequest,rawset:RDD[(String,String,String,Int,Double,Long)]) {
+    // TODO
+  }
   
   /**
-   * This method saves event-based ratings as file on a Hadoop file system; to this
+   * This method saves event-based ratings as a file on a Hadoop file system; to this
    * end it is distinguished between requests that have specified a certain format,
    * and those where no format is provided.
    */
-  def ratingsToFile(req:ServiceRequest,rawset:RDD[(String,String,String,Int,Long)]) {
+  def ratingsToFileImplicit(req:ServiceRequest,rawset:RDD[(String,String,String,Int,Long)]) {
     
     val ratings = buildRatings(rawset)
     /*
@@ -66,20 +70,20 @@ class EPrefBuilder(@transient sc:SparkContext) extends Serializable {
       val format = req.data(Names.REQ_FORMAT)
       format match {
         
-        case Formats.FM => {
+        case Formats.CAR => {
           
           /*
            * STEP #1: Register columns or fields of event-based feature vector in a Redis
            * instance; this field specification is used by the Context-Aware Analysis engine 
            * (later one) 
            */
-          FMFormatter.fields(req)
+          EventFormatter.fields(req)
           /*
            * STEP #2: Save ratings in binary feature format as file on a Hadoop file system;
            * the respective path must be configured and, in case of the recommender system
            * shared with the Context-Aware Analysis engine          
            */          
-          val formatted = FMFormatter.format(req,ratings)
+          val formatted = EventFormatter.format(req,ratings)
           val stringified = formatted.map(record => {
           
             val target = record._1
@@ -116,8 +120,12 @@ class EPrefBuilder(@transient sc:SparkContext) extends Serializable {
     }
     
   }
+
+  def ratingsToRedisExplicit(req:ServiceRequest,rawset:RDD[(String,String,String,Int,Double,Long)]) {
+    // TODO
+  }
   
-  def ratingsToRedis(req:ServiceRequest,rawset:RDD[(String,String,String,Int,Long)]) {
+  def ratingsToRedisImplicit(req:ServiceRequest,rawset:RDD[(String,String,String,Int,Long)]) {
     
     val ratings = buildRatings(rawset)
     /*
@@ -143,20 +151,20 @@ class EPrefBuilder(@transient sc:SparkContext) extends Serializable {
       val format = req.data(Names.REQ_FORMAT)
        format match {
         
-        case Formats.FM => {
+        case Formats.CAR => {
           
           /*
            * STEP #1: Register columns or fields of event-based feature vector in a Redis
            * instance; this field specification is used by the Context-Aware Analysis engine 
            * (later one) 
            */
-          FMFormatter.fields(req)
+          EventFormatter.fields(req)
           /*
            * STEP #2: Save ratings in binary feature format as file on a Hadoop file system;
            * the respective path must be configured and, in case of the recommender system
            * shared with the Context-Aware Analysis engine          
            */          
-          val formatted = FMFormatter.format(req,ratings)
+          val formatted = EventFormatter.format(req,ratings)
           
           val bratings = sc.broadcast(Ratings)
           formatted.foreach(record => {

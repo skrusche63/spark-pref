@@ -30,7 +30,7 @@ import de.kp.spark.pref.Configuration
 import org.joda.time.DateTime
 import scala.collection.mutable.Buffer
 
-object FMFormatter extends Serializable {
+object EventFormatter extends Serializable {
 
   val (host,port) = Configuration.redis
   val client = RedisClient(host,port.toInt)

@@ -33,6 +33,10 @@ import scala.collection.mutable.Buffer
  * item
  */
 class NPrefBuilder(@transient sc:SparkContext) extends Serializable {
+
+  def ratingsToFileExplicit(req:ServiceRequest,rawset:RDD[(String,String,Int,Double,Long)]) {
+    // TODO
+  }
   
   /**
    * The NPrefBuilder supports the following input format: (site,user,groups).
@@ -45,7 +49,7 @@ class NPrefBuilder(@transient sc:SparkContext) extends Serializable {
    * as an ecommerce order or transaction etc.
    * 
    */  
-  def ratingsToFile(req:ServiceRequest,rawset:RDD[(String,String,List[(Long,List[Int])])]) {
+  def ratingsToFileImplicit(req:ServiceRequest,rawset:RDD[(String,String,List[(Long,List[Int])])]) {
     
     val nprefs = buildRatings(rawset)
     /*
@@ -70,8 +74,12 @@ class NPrefBuilder(@transient sc:SparkContext) extends Serializable {
     nprefs.map(x => List(x._1,x._2,x._3.toString,x._4.toString).mkString(",")).saveAsTextFile(path)
     
   }
+
+  def ratingsToRedisExplicit(req:ServiceRequest,rawset:RDD[(String,String,Int,Double,Long)]) {
+    // TODO
+  }
   
-   def ratingsToRedis(req:ServiceRequest,rawset:RDD[(String,String,List[(Long,List[Int])])]) {
+  def ratingsToRedisImplicit(req:ServiceRequest,rawset:RDD[(String,String,List[(Long,List[Int])])]) {
     
     val nprefs = buildRatings(rawset)
     /*

@@ -21,12 +21,14 @@ package de.kp.spark.pref.source
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
+import de.kp.spark.core.Names
 import de.kp.spark.core.model._
+
 import de.kp.spark.pref.spec.Fields
 
 class EventModel(@transient sc:SparkContext) extends Serializable {
-
-  def buildElastic(req:ServiceRequest,rawset:RDD[Map[String,String]]):RDD[(String,String,String,Int,Long)] = {
+  
+  def buildElasticExplicit(req:ServiceRequest,rawset:RDD[Map[String,String]]):RDD[(String,String,String,Int,Double,Long)] = {
  
     val spec = sc.broadcast(Fields.get(req))
     rawset.map(data => {
@@ -38,7 +40,29 @@ class EventModel(@transient sc:SparkContext) extends Serializable {
       val item  = data(spec.value("item")._1)
 
       val event = data(spec.value("event")._1).toInt
+      val score = data(spec.value("score")._1).toDouble
       
+      (site,user,item,event,score,timestamp)
+      
+    })
+    
+  }
+
+  def buildElasticImplicit(req:ServiceRequest,rawset:RDD[Map[String,String]]):RDD[(String,String,String,Int,Long)] = {
+ 
+    val spec = sc.broadcast(Fields.get(req))
+    val rating = sc.broadcast(req.data(Names.REQ_RATING))
+    
+    rawset.map(data => {
+      
+      val site = data(spec.value("site")._1)
+      val timestamp = data(spec.value("timestamp")._1).toLong
+
+      val user = data(spec.value("user")._1)      
+      val item  = data(spec.value("item")._1)
+
+      val event = data(spec.value("event")._1).toInt
+     
       (site,user,item,event,timestamp)
       
     })
@@ -47,18 +71,52 @@ class EventModel(@transient sc:SparkContext) extends Serializable {
   
   /**
    * The raw data are retrieved from a pre processed web log file;
+   * the format expected is: site,user,item,time,event,score
+   */
+  def buildFileExplicit(req:ServiceRequest,rawset:RDD[String]):RDD[(String,String,String,Int,Double,Long)] = {
+      
+    rawset.map(line => {
+      val Array(site,user,item,time,event,score) = line.split(",")
+      (site,user,item,event.toInt,score.toDouble,time.toLong)
+    })
+  
+  }
+   /**
+   * The raw data are retrieved from a pre processed web log file;
    * the format expected is: site,user,item,time,event
    */
-  def buildFile(req:ServiceRequest,rawset:RDD[String]):RDD[(String,String,String,Int,Long)] = {
-    
+  def buildFileImplicit(req:ServiceRequest,rawset:RDD[String]):RDD[(String,String,String,Int,Long)] = {
+       
     rawset.map(line => {
       val Array(site,user,item,time,event) = line.split(",")
       (site,user,item,event.toInt,time.toLong)
     })
+  
+  }
+ 
+  def buildJDBCExplicit(req:ServiceRequest,rawset:RDD[Map[String,Any]]):RDD[(String,String,String,Int,Double,Long)] = {
+        
+    val fieldspec = Fields.get(req)
+    val fields = fieldspec.map(kv => kv._2._1).toList    
+
+    val spec = sc.broadcast(fieldspec)
+    rawset.map(data => {
+      
+      val site = data(spec.value("site")._1).asInstanceOf[String]
+      val timestamp = data(spec.value("timestamp")._1).asInstanceOf[Long]
+
+      val user = data(spec.value("user")._1).asInstanceOf[String] 
+      val item  = data(spec.value("item")._1).asInstanceOf[String]
+
+      val event = data(spec.value("event")._1).asInstanceOf[Int]
+      val score = data(spec.value("score")._1).asInstanceOf[Double]
+      
+      (site,user,item,event,score,timestamp)
+     
+    })
 
   }
-  
-  def buildJDBC(req:ServiceRequest,rawset:RDD[Map[String,Any]]):RDD[(String,String,String,Int,Long)] = {
+  def buildJDBCImplicit(req:ServiceRequest,rawset:RDD[Map[String,Any]]):RDD[(String,String,String,Int,Long)] = {
         
     val fieldspec = Fields.get(req)
     val fields = fieldspec.map(kv => kv._2._1).toList    

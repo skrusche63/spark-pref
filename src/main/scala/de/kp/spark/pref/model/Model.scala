@@ -58,9 +58,9 @@ object ResponseStatus extends BaseStatus
 
 object Formats {
 
-  val FM:String = "FM"
+  val CAR:String = "CAR"
   
-  private val formats = List(FM)
+  private val formats = List(CAR)
   def isFormat(format:String):Boolean = formats.contains(format)
 
 }
@@ -80,9 +80,8 @@ object Sources {
   val FILE:String    = "FILE"
   val ELASTIC:String = "ELASTIC" 
   val JDBC:String    = "JDBC"    
-  val PIWIK:String   = "PIWIK"    
   
-  private val sources = List(FILE,ELASTIC,JDBC,PIWIK)
+  private val sources = List(FILE,ELASTIC,JDBC)
   def isSource(source:String):Boolean = sources.contains(source)
   
 }

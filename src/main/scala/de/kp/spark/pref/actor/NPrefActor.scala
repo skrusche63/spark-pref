@@ -53,15 +53,39 @@ class NPrefActor(@transient sc:SparkContext) extends BaseActor {
         try {
           
           val source = new TransactionSource(sc)
-          val dataset = source.transDS(req)
-
-          req.data("sink") match {
+          val rating = req.data(Names.REQ_RATING)
+          
+          rating match {
             
-            case Sinks.FILE  => builder.ratingsToFile(req,dataset)
-            case Sinks.REDIS => builder.ratingsToRedis(req,dataset)
+            case "explicit" => {
+          
+              val dataset = source.explicitDS(req)
+              req.data(Names.REQ_SINK) match {
             
-            case _ => {/*do not happen*/}
+                case Sinks.FILE  => builder.ratingsToFileExplicit(req,dataset)
+                case Sinks.REDIS => builder.ratingsToRedisExplicit(req,dataset)
             
+                case _ => {/*does not happen*/}
+            
+              }
+              
+            }
+            
+            case "implicit" => {
+          
+              val dataset = source.implicitDS(req)
+              req.data(Names.REQ_SINK) match {
+            
+                case Sinks.FILE  => builder.ratingsToFileImplicit(req,dataset)
+                case Sinks.REDIS => builder.ratingsToRedisImplicit(req,dataset)
+            
+                case _ => {/*does not happen*/}
+            
+              }
+              
+            }
+            
+            case _ => throw new Exception("This rating type is not supported.")
           }
 
           cache.addStatus(req,ResponseStatus.RATING_BUILDING_FINISHED)
