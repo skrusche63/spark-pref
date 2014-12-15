@@ -56,9 +56,9 @@ object Configuration extends Serializable with CoreConf {
     
   }
    
-  override def file:List[String] = {
+  override def input:List[String] = {
   
-    val cfg = config.getConfig("file")
+    val cfg = config.getConfig("input")
     
     val event = cfg.getString("event")   
     val item  = cfg.getString("item")   
@@ -81,14 +81,14 @@ object Configuration extends Serializable with CoreConf {
    
   }
   
-  def output:Map[String,String] = {
+  override def output:List[String] = {
   
     val cfg = config.getConfig("output")
     
-    val event = cfg.getString("event.model")
-    val item  = cfg.getString("item.model")
+    val event = cfg.getString("event")
+    val item  = cfg.getString("item")
     
-    Map("event" -> event, "item" -> item)
+    List(event,item)
     
   }
   

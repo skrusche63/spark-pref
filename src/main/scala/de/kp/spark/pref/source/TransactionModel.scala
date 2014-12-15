@@ -21,6 +21,7 @@ package de.kp.spark.pref.source
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
+import de.kp.spark.core.Names
 import de.kp.spark.core.model._
 
 import de.kp.spark.pref.model._
@@ -35,13 +36,13 @@ class TransactionModel(@transient sc:SparkContext) extends Serializable {
     val spec = sc.broadcast(Fields.get(req))
     rawset.map(data => {
       
-      val site = data(spec.value("site")._1)
-      val timestamp = data(spec.value("timestamp")._1).toLong
+      val site = data(spec.value(Names.SITE_FIELD)._1)
+      val timestamp = data(spec.value(Names.TIMESTAMP_FIELD)._1).toLong
 
-      val user = data(spec.value("user")._1)      
-      val item  = data(spec.value("item")._1).toInt
+      val user = data(spec.value(Names.USER_FIELD)._1)      
+      val item  = data(spec.value(Names.ITEM_FIELD)._1).toInt
       
-      val score = data(spec.value("score")._1).toDouble
+      val score = data(spec.value(Names.SCORE_FIELD)._1).toDouble
        
       (site,user,item,score,timestamp)
       
@@ -54,13 +55,13 @@ class TransactionModel(@transient sc:SparkContext) extends Serializable {
     val spec = sc.broadcast(Fields.get(req))
     val dataset = rawset.map(data => {
       
-      val site = data(spec.value("site")._1)
-      val timestamp = data(spec.value("timestamp")._1).toLong
+      val site = data(spec.value(Names.SITE_FIELD)._1)
+      val timestamp = data(spec.value(Names.TIMESTAMP_FIELD)._1).toLong
 
-      val user = data(spec.value("user")._1)      
-      val group = data(spec.value("group")._1)
+      val user = data(spec.value(Names.USER_FIELD)._1)      
+      val group = data(spec.value(Names.GROUP_FIELD)._1)
 
-      val item  = data(spec.value("item")._1)
+      val item  = data(spec.value(Names.ITEM_FIELD)._1)
       
       (site,user,group,timestamp,item)
       
@@ -98,13 +99,13 @@ class TransactionModel(@transient sc:SparkContext) extends Serializable {
     val spec = sc.broadcast(fieldspec)
     rawset.map(data => {
       
-      val site = data(spec.value("site")._1).asInstanceOf[String]
-      val timestamp = data(spec.value("timestamp")._1).asInstanceOf[Long]
+      val site = data(spec.value(Names.SITE_FIELD)._1).asInstanceOf[String]
+      val timestamp = data(spec.value(Names.TIMESTAMP_FIELD)._1).asInstanceOf[Long]
 
-      val user = data(spec.value("user")._1).asInstanceOf[String] 
-      val item = data(spec.value("item")._1).asInstanceOf[Int]
+      val user = data(spec.value(Names.USER_FIELD)._1).asInstanceOf[String] 
+      val item = data(spec.value(Names.ITEM_FIELD)._1).asInstanceOf[Int]
 
-      val score = data(spec.value("score")._1).asInstanceOf[Double]
+      val score = data(spec.value(Names.SCORE_FIELD)._1).asInstanceOf[Double]
       
       (site,user,item,score,timestamp)
       
@@ -120,13 +121,59 @@ class TransactionModel(@transient sc:SparkContext) extends Serializable {
     val spec = sc.broadcast(fieldspec)
     val dataset = rawset.map(data => {
       
-      val site = data(spec.value("site")._1).asInstanceOf[String]
-      val timestamp = data(spec.value("timestamp")._1).asInstanceOf[Long]
+      val site = data(spec.value(Names.SITE_FIELD)._1).asInstanceOf[String]
+      val timestamp = data(spec.value(Names.TIMESTAMP_FIELD)._1).asInstanceOf[Long]
 
-      val user = data(spec.value("user")._1).asInstanceOf[String] 
-      val group = data(spec.value("group")._1).asInstanceOf[String]
+      val user = data(spec.value(Names.USER_FIELD)._1).asInstanceOf[String] 
+      val group = data(spec.value(Names.GROUP_FIELD)._1).asInstanceOf[String]
       
-      val item  = data(spec.value("item")._1).asInstanceOf[String]
+      val item  = data(spec.value(Names.ITEM_FIELD)._1).asInstanceOf[String]
+      
+      (site,user,group,timestamp,item)
+      
+    })
+    
+    buildTransactions(dataset)
+
+  }
+  
+  def buildParquetExplicit(req:ServiceRequest,rawset:RDD[Map[String,Any]]):RDD[(String,String,Int,Double,Long)] = {
+        
+    val fieldspec = Fields.get(req)
+    val fields = fieldspec.map(kv => kv._2._1).toList    
+
+    val spec = sc.broadcast(fieldspec)
+    rawset.map(data => {
+      
+      val site = data(spec.value(Names.SITE_FIELD)._1).asInstanceOf[String]
+      val timestamp = data(spec.value(Names.TIMESTAMP_FIELD)._1).asInstanceOf[Long]
+
+      val user = data(spec.value(Names.USER_FIELD)._1).asInstanceOf[String] 
+      val item = data(spec.value(Names.ITEM_FIELD)._1).asInstanceOf[Int]
+
+      val score = data(spec.value(Names.SCORE_FIELD)._1).asInstanceOf[Double]
+      
+      (site,user,item,score,timestamp)
+      
+    })
+
+  }
+  
+  def buildParquetImplicit(req:ServiceRequest,rawset:RDD[Map[String,Any]]):RDD[(String,String,List[(Long,List[Int])])] = {
+        
+    val fieldspec = Fields.get(req)
+    val fields = fieldspec.map(kv => kv._2._1).toList    
+
+    val spec = sc.broadcast(fieldspec)
+    val dataset = rawset.map(data => {
+      
+      val site = data(spec.value(Names.SITE_FIELD)._1).asInstanceOf[String]
+      val timestamp = data(spec.value(Names.TIMESTAMP_FIELD)._1).asInstanceOf[Long]
+
+      val user = data(spec.value(Names.USER_FIELD)._1).asInstanceOf[String] 
+      val group = data(spec.value(Names.GROUP_FIELD)._1).asInstanceOf[String]
+      
+      val item  = data(spec.value(Names.ITEM_FIELD)._1).asInstanceOf[String]
       
       (site,user,group,timestamp,item)
       

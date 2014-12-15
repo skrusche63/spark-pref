@@ -24,33 +24,52 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext._
 
 import de.kp.spark.core.Names
-
 import de.kp.spark.core.model._
+
+import de.kp.spark.core.io.ParquetWriter
 import de.kp.spark.pref.format.{Items,Users,Ratings}
 
-import de.kp.spark.pref.model.Formats
+import de.kp.spark.pref.model._
 
 import de.kp.spark.pref.format.EventFormatter
 import de.kp.spark.pref.util.EventScoreBuilder
 
 class EPrefBuilder(@transient sc:SparkContext) extends Serializable {
 
-  def ratingsToFileExplicit(req:ServiceRequest,rawset:RDD[(String,String,String,Int,Double,Long)]) {
+  def ratingsExplicit(req:ServiceRequest,rawset:RDD[(String,String,String,Int,Double,Long)]) {
     
     val ratings = rawset.map(x => {
       val (site,user,item,event,score,timestamp) = x
       (site,user,item,score,timestamp,event)
     })
+    
+    req.data(Names.REQ_SINK) match {
+  
+      case Sinks.FILE    => ratingsToFile(req,ratings)
+      case Sinks.PARQUET => ratingsToParquet(req,ratings)
+        
+      case Sinks.REDIS => ratingsToRedis(req,ratings)
+      
+      case _ => {/* do nothing */}
 
-    ratingsToFile(req,ratings)
+    }
     
   }
   
-  def ratingsToFileImplicit(req:ServiceRequest,rawset:RDD[(String,String,String,Int,Long)]) {
+  def ratingsImplicit(req:ServiceRequest,rawset:RDD[(String,String,String,Int,Long)]) {
     
     val ratings = buildRatings(rawset)
-    ratingsToFile(req,ratings)
-    
+    req.data(Names.REQ_SINK) match {
+  
+      case Sinks.FILE    => ratingsToFile(req,ratings)
+      case Sinks.PARQUET => ratingsToParquet(req,ratings)
+        
+      case Sinks.REDIS => ratingsToRedis(req,ratings)
+      
+      case _ => {/* do nothing */}
+
+    }
+  
   }
   
   /**
@@ -110,7 +129,7 @@ class EPrefBuilder(@transient sc:SparkContext) extends Serializable {
           
           })
     
-          val path = Configuration.output("event")
+          val path = Configuration.output(0)
           stringified.saveAsTextFile(path)
           
         }
@@ -127,28 +146,11 @@ class EPrefBuilder(@transient sc:SparkContext) extends Serializable {
         
       })
     
-      val path = Configuration.output("event")
+      val path = Configuration.output(0)
       stringified.saveAsTextFile(path)
 
     }
     
-  }
-  def ratingsToRedisExplicit(req:ServiceRequest,rawset:RDD[(String,String,String,Int,Double,Long)]) {
-    
-    val ratings = rawset.map(x => {
-      val (site,user,item,event,score,timestamp) = x
-      (site,user,item,score,timestamp,event)
-    })
-
-    ratingsToRedis(req,ratings)
-    
-   }
-  
-  def ratingsToRedisImplicit(req:ServiceRequest,rawset:RDD[(String,String,String,Int,Long)]) {
-    
-    val ratings = buildRatings(rawset)
-    ratingsToRedis(req,ratings)
-  
   }
   
   /**
@@ -228,6 +230,75 @@ class EPrefBuilder(@transient sc:SparkContext) extends Serializable {
 
       })
     
+    }
+    
+  }
+  
+  private def ratingsToParquet(req:ServiceRequest,ratings:RDD[(String,String,String,Double,Long,Int)]) {
+    /*
+     * Check whether users already exist for the referenced mining or building
+     * task and associated model or matrix name
+     */
+    if (Users.exists(req) == false) {
+      val busers = sc.broadcast(Users)
+      ratings.foreach(x => busers.value.put(req,x._2))
+    
+    } 
+    /*
+     * Check whether items already exist for the referenced mining or building
+     * task and associated model or matrix name
+     */
+    if (Items.exists(req) == false) {
+      val bitems = sc.broadcast(Items)
+      ratings.foreach(x => bitems.value.put(req,x._3.toString))    
+    } 
+
+    if (req.data.contains(Names.REQ_FORMAT)) {
+       
+      val format = req.data(Names.REQ_FORMAT)
+       format match {
+        
+        case Formats.CAR => {
+          
+          /*
+           * STEP #1: Register columns or fields of event-based feature vector in a Redis
+           * instance; this field specification is used by the Context-Aware Analysis engine 
+           * (later one) 
+           */
+          EventFormatter.fields(req)
+          /*
+           * STEP #2: Save ratings in binary feature format as file on a Hadoop file system;
+           * the respective path must be configured and, in case of the recommender system
+           * shared with the Context-Aware Analysis engine          
+           */          
+          val formatted = EventFormatter.format(req,ratings)
+          val dataset = formatted.map(record => {
+          
+            val (target,features) = record
+            TargetedPointObject(target,features)
+          
+          })
+      
+          val store = Configuration.output(0)
+          new ParquetWriter(sc).writeTargetedPoints(store, dataset)
+          
+        }
+        
+        case _ => throw new Exception("Format is not supported.")
+
+      }
+      
+    } else {
+      
+      val dataset = ratings.map(record => {
+        
+        val (site,user,item,rating,timestamp,event) = record
+        EventScoreObject(site,user,item,rating,timestamp,event)
+ 
+      })
+
+      val store = Configuration.output(0)
+      new ParquetWriter(sc).writeScoredEvents(store, dataset)
     }
     
   }

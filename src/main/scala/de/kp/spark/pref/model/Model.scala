@@ -35,8 +35,16 @@ case class NPref(
 case class NPrefs(items:List[NPref])
 
 object Algorithms {
-  
+  /*
+   * 'event' based user preference building; events can be
+   * extracted from web log files or other sources
+   */
   val EPREF:String = "EPREF"
+  /*
+   * 'item' base user preferences building; items are elements
+   * of a transaction database that can be an ecommerce purchase
+   * database
+   */
   val NPREF:String = "NPREF"
     
   private val algorithms = List(EPREF,NPREF)
@@ -67,10 +75,11 @@ object Formats {
 
 object Sinks {
 
-  val FILE:String  = "FILE"
-  val REDIS:String = "REDIS" 
+  val FILE:String    = "FILE"
+  val REDIS:String   = "REDIS" 
+  val PARQUET:String = "PARQUET"    
   
-  private val sinks = List(FILE,REDIS)
+  private val sinks = List(FILE,PARQUET,REDIS)
   def isSink(sink:String):Boolean = sinks.contains(sink)
   
 }
@@ -80,8 +89,9 @@ object Sources {
   val FILE:String    = "FILE"
   val ELASTIC:String = "ELASTIC" 
   val JDBC:String    = "JDBC"    
+  val PARQUET:String = "PARQUET"    
   
-  private val sources = List(FILE,ELASTIC,JDBC)
+  private val sources = List(FILE,ELASTIC,JDBC,PARQUET)
   def isSource(source:String):Boolean = sources.contains(source)
   
 }

@@ -59,28 +59,14 @@ class EPrefActor(@transient sc:SparkContext) extends BaseActor {
             case "explicit" => {
           
               val dataset = source.explicitDS(req)
-              req.data(Names.REQ_SINK) match {
-            
-                case Sinks.FILE  => builder.ratingsToFileExplicit(req,dataset)
-                case Sinks.REDIS => builder.ratingsToRedisExplicit(req,dataset)
-            
-                case _ => {/*does not happen*/}
-            
-              }
+              builder.ratingsExplicit(req,dataset)
               
             }
             
             case "implicit" => {
           
               val dataset = source.implicitDS(req)
-              req.data(Names.REQ_SINK) match {
-            
-                case Sinks.FILE  => builder.ratingsToFileImplicit(req,dataset)
-                case Sinks.REDIS => builder.ratingsToRedisImplicit(req,dataset)
-            
-                case _ => {/*does not happen*/}
-            
-              }
+              builder.ratingsImplicit(req,dataset)
               
             }
             

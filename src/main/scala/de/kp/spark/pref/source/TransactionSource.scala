@@ -21,8 +21,10 @@ package de.kp.spark.pref.source
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
+import de.kp.spark.core.Names
+
 import de.kp.spark.core.model._
-import de.kp.spark.core.source.{ElasticSource,FileSource,JdbcSource}
+import de.kp.spark.core.source._
 
 import de.kp.spark.pref.Configuration
 import de.kp.spark.pref.model.Sources
@@ -36,7 +38,7 @@ class TransactionSource(@transient sc:SparkContext) {
   
   def explicitDS(req:ServiceRequest):RDD[(String,String,Int,Double,Long)] = {
     
-    val source = req.data("source")
+    val source = req.data(Names.REQ_SOURCE)
     source match {
 
       case Sources.ELASTIC => {
@@ -48,7 +50,7 @@ class TransactionSource(@transient sc:SparkContext) {
 
       case Sources.FILE => {
 
-        val rawset = new FileSource(sc).connect(config.file(1),req)
+        val rawset = new FileSource(sc).connect(config.input(1),req)
         transactionModel.buildFileExplicit(req,rawset)
         
       }
@@ -61,7 +63,16 @@ class TransactionSource(@transient sc:SparkContext) {
         transactionModel.buildJDBCExplicit(req,rawset)
         
       }
-            
+
+      case Sources.PARQUET => {
+    
+        val fields = Fields.get(req).map(kv => kv._2._1).toList    
+         
+        val rawset = new ParquetSource(sc).connect(config.input(1),req,fields)
+        transactionModel.buildParquetExplicit(req,rawset)
+        
+      }
+      
       case _ => null
       
    }
@@ -70,7 +81,7 @@ class TransactionSource(@transient sc:SparkContext) {
   
   def implicitDS(req:ServiceRequest):RDD[(String,String,List[(Long,List[Int])])] = {
     
-    val source = req.data("source")
+    val source = req.data(Names.REQ_SOURCE)
     source match {
 
       case Sources.ELASTIC => {
@@ -82,7 +93,7 @@ class TransactionSource(@transient sc:SparkContext) {
 
       case Sources.FILE => {
 
-        val rawset = new FileSource(sc).connect(config.file(1),req)
+        val rawset = new FileSource(sc).connect(config.input(1),req)
         transactionModel.buildFileImplicit(req,rawset)
         
       }
@@ -93,6 +104,15 @@ class TransactionSource(@transient sc:SparkContext) {
          
         val rawset = new JdbcSource(sc).connect(config,req,fields)
         transactionModel.buildJDBCImplicit(req,rawset)
+        
+      }
+
+      case Sources.PARQUET => {
+    
+        val fields = Fields.get(req).map(kv => kv._2._1).toList    
+         
+        val rawset = new ParquetSource(sc).connect(config.input(1),req,fields)
+        transactionModel.buildParquetImplicit(req,rawset)
         
       }
             
