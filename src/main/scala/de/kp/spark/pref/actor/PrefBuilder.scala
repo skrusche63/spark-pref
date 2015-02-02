@@ -18,21 +18,19 @@ package de.kp.spark.pref.actor
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
-import org.apache.spark.SparkContext
-
 import akka.actor.{ActorRef,Props}
 import akka.pattern.ask
 import akka.util.Timeout
 
 import de.kp.spark.core.model._
 
-import de.kp.spark.pref.Configuration
+import de.kp.spark.pref.RequestContext
 import de.kp.spark.pref.model._
 
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 
-class PrefBuilder(@transient val sc:SparkContext) extends BaseActor {
+class PrefBuilder(@transient val ctx:RequestContext) extends BaseActor {
 
   implicit val ec = context.dispatcher
 
@@ -90,7 +88,7 @@ class PrefBuilder(@transient val sc:SparkContext) extends BaseActor {
   
   private def build(req:ServiceRequest):Future[Any] = {
 
-    val (duration,retries,time) = Configuration.actor      
+    val (duration,retries,time) = ctx.config.actor      
     implicit val timeout:Timeout = DurationInt(time).second
     
     ask(actor(req), req)
@@ -142,9 +140,9 @@ class PrefBuilder(@transient val sc:SparkContext) extends BaseActor {
 
     val algorithm = req.data("algorithm")
     if (algorithm == Algorithms.EPREF) {      
-      context.actorOf(Props(new EPrefActor(sc)))      
+      context.actorOf(Props(new EPrefActor(ctx)))      
     } else {
-     context.actorOf(Props(new NPrefActor(sc)))
+     context.actorOf(Props(new NPrefActor(ctx)))
     }
   }
 

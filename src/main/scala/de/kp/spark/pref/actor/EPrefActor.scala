@@ -18,13 +18,12 @@ package de.kp.spark.pref.actor
  * If not, see <http://www.gnu.org/licenses/>.
  */
 
-import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 import de.kp.spark.core.Names
 import de.kp.spark.core.model._
 
-import de.kp.spark.pref.EPrefBuilder
+import de.kp.spark.pref.{EPrefBuilder,RequestContext}
 
 import de.kp.spark.pref.source.EventSource
 import de.kp.spark.pref.model._
@@ -33,9 +32,9 @@ import de.kp.spark.pref.model._
  * The EPrefActor is responsible for preferences built from
  * customer engagement events or sequences
  */
-class EPrefActor(@transient sc:SparkContext) extends BaseActor {
+class EPrefActor(@transient ctx:RequestContext) extends BaseActor {
   
-  private val builder = new EPrefBuilder(sc)
+  private val builder = new EPrefBuilder(ctx)
   def receive = {
 
     case req:ServiceRequest => {
@@ -51,7 +50,7 @@ class EPrefActor(@transient sc:SparkContext) extends BaseActor {
  
         try {
           
-          val source = new EventSource(sc)
+          val source = new EventSource(ctx)
           val rating = req.data(Names.REQ_RATING)
           
           rating match {

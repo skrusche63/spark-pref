@@ -18,22 +18,23 @@ package de.kp.spark.pref.source
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
-import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 import de.kp.spark.core.Names
 import de.kp.spark.core.model._
+
+import de.kp.spark.pref.RequestContext
 
 import de.kp.spark.pref.model._
 import de.kp.spark.pref.spec.Fields
 
 import scala.collection.mutable.ArrayBuffer
 
-class TransactionModel(@transient sc:SparkContext) extends Serializable {
+class TransactionModel(@transient ctx:RequestContext) extends Serializable {
   
   def buildElasticExplicit(req:ServiceRequest,rawset:RDD[Map[String,String]]):RDD[(String,String,Int,Double,Long)] = {
  
-    val spec = sc.broadcast(Fields.get(req))
+    val spec = ctx.sparkContext.broadcast(Fields.get(req))
     rawset.map(data => {
       
       val site = data(spec.value(Names.SITE_FIELD)._1)
@@ -52,7 +53,7 @@ class TransactionModel(@transient sc:SparkContext) extends Serializable {
   
   def buildElasticImplicit(req:ServiceRequest,rawset:RDD[Map[String,String]]):RDD[(String,String,List[(Long,List[Int])])] = {
  
-    val spec = sc.broadcast(Fields.get(req))
+    val spec = ctx.sparkContext.broadcast(Fields.get(req))
     val dataset = rawset.map(data => {
       
       val site = data(spec.value(Names.SITE_FIELD)._1)
@@ -96,7 +97,7 @@ class TransactionModel(@transient sc:SparkContext) extends Serializable {
     val fieldspec = Fields.get(req)
     val fields = fieldspec.map(kv => kv._2._1).toList    
 
-    val spec = sc.broadcast(fieldspec)
+    val spec = ctx.sparkContext.broadcast(fieldspec)
     rawset.map(data => {
       
       val site = data(spec.value(Names.SITE_FIELD)._1).asInstanceOf[String]
@@ -118,7 +119,7 @@ class TransactionModel(@transient sc:SparkContext) extends Serializable {
     val fieldspec = Fields.get(req)
     val fields = fieldspec.map(kv => kv._2._1).toList    
 
-    val spec = sc.broadcast(fieldspec)
+    val spec = ctx.sparkContext.broadcast(fieldspec)
     val dataset = rawset.map(data => {
       
       val site = data(spec.value(Names.SITE_FIELD)._1).asInstanceOf[String]
@@ -142,7 +143,7 @@ class TransactionModel(@transient sc:SparkContext) extends Serializable {
     val fieldspec = Fields.get(req)
     val fields = fieldspec.map(kv => kv._2._1).toList    
 
-    val spec = sc.broadcast(fieldspec)
+    val spec = ctx.sparkContext.broadcast(fieldspec)
     rawset.map(data => {
       
       val site = data(spec.value(Names.SITE_FIELD)._1).asInstanceOf[String]
@@ -164,7 +165,7 @@ class TransactionModel(@transient sc:SparkContext) extends Serializable {
     val fieldspec = Fields.get(req)
     val fields = fieldspec.map(kv => kv._2._1).toList    
 
-    val spec = sc.broadcast(fieldspec)
+    val spec = ctx.sparkContext.broadcast(fieldspec)
     val dataset = rawset.map(data => {
       
       val site = data(spec.value(Names.SITE_FIELD)._1).asInstanceOf[String]

@@ -17,9 +17,7 @@ package de.kp.spark.pref
 * 
 * If not, see <http://www.gnu.org/licenses/>.
 */
-import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-
 import org.apache.spark.SparkContext._
 
 import de.kp.spark.core.Names
@@ -37,7 +35,7 @@ import scala.collection.mutable.Buffer
  * implicit preferences of a certain user for a specific
  * item
  */
-class NPrefBuilder(@transient sc:SparkContext) extends Serializable {
+class NPrefBuilder(@transient ctx:RequestContext) extends Serializable {
 
   def ratingsExplicit(req:ServiceRequest,rawset:RDD[(String,String,Int,Double,Long)]) {
 
@@ -92,7 +90,7 @@ class NPrefBuilder(@transient sc:SparkContext) extends Serializable {
      * task and associated model or matrix name
      */
     if (Users.exists(req) == false) {
-      val busers = sc.broadcast(Users)
+      val busers = ctx.sparkContext.broadcast(Users)
       ratings.foreach(x => busers.value.put(req,x._2))
     
     } 
@@ -101,7 +99,7 @@ class NPrefBuilder(@transient sc:SparkContext) extends Serializable {
      * task and associated model or matrix name
      */
     if (Items.exists(req) == false) {
-      val bitems = sc.broadcast(Items)
+      val bitems = ctx.sparkContext.broadcast(Items)
       ratings.foreach(x => bitems.value.put(req,x._3.toString))    
     } 
 
@@ -116,7 +114,7 @@ class NPrefBuilder(@transient sc:SparkContext) extends Serializable {
      * task and associated model or matrix name
      */
     if (Users.exists(req) == false) {
-      val busers = sc.broadcast(Users)
+      val busers = ctx.sparkContext.broadcast(Users)
       ratings.foreach(x => busers.value.put(req,x._2))
     
     } 
@@ -125,11 +123,11 @@ class NPrefBuilder(@transient sc:SparkContext) extends Serializable {
      * task and associated model or matrix name
      */
     if (Items.exists(req) == false) {
-      val bitems = sc.broadcast(Items)
+      val bitems = ctx.sparkContext.broadcast(Items)
       ratings.foreach(x => bitems.value.put(req,x._3.toString))    
     } 
 
-    val bratings = sc.broadcast(Ratings)
+    val bratings = ctx.sparkContext.broadcast(Ratings)
     ratings.foreach(x => bratings.value.put(req,List(x._1,x._2,x._3.toString,x._4.toString).mkString(",")))
     
   }
@@ -140,7 +138,7 @@ class NPrefBuilder(@transient sc:SparkContext) extends Serializable {
      * task and associated model or matrix name
      */
     if (Users.exists(req) == false) {
-      val busers = sc.broadcast(Users)
+      val busers = ctx.sparkContext.broadcast(Users)
       ratings.foreach(x => busers.value.put(req,x._2))
     
     } 
@@ -149,14 +147,14 @@ class NPrefBuilder(@transient sc:SparkContext) extends Serializable {
      * task and associated model or matrix name
      */
     if (Items.exists(req) == false) {
-      val bitems = sc.broadcast(Items)
+      val bitems = ctx.sparkContext.broadcast(Items)
       ratings.foreach(x => bitems.value.put(req,x._3.toString))    
     } 
 
     val store = Configuration.output(1)    
     val dataset = ratings.map(x => ItemScoreObject(x._1,x._2,x._3,x._4))
     
-    val writer = new ParquetWriter(sc)
+    val writer = new ParquetWriter(ctx.sparkContext)
     writer.writeScoredItems(store, dataset)
     
   }
@@ -235,7 +233,7 @@ class NPrefBuilder(@transient sc:SparkContext) extends Serializable {
       
     }).collect().toMap
 
-    val bcprefs = sc.broadcast(itemMaxPref)
+    val bcprefs = ctx.sparkContext.broadcast(itemMaxPref)
     userItemPrefs.flatMap(data => {
       
       val (site,user,prefs) = data

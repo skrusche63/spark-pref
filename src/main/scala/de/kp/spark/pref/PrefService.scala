@@ -47,8 +47,9 @@ class PrefService(conf:String, name:String) extends SparkService {
   
   /* Create Spark context */
   private val sc = createCtxLocal("PrefContext",Configuration.spark)      
-
-  val master = system.actorOf(Props(new PrefMaster(sc)), name="rating-master")
+  private val ctx = new RequestContext(sc)
+  
+  val master = system.actorOf(Props(new PrefMaster(ctx)), name="rating-master")
 
   def shutdown = system.shutdown()
   

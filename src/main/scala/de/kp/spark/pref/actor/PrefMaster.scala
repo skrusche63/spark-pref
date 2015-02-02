@@ -18,8 +18,6 @@ package de.kp.spark.pref.actor
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
-import org.apache.spark.SparkContext
-
 import akka.actor.{ActorRef,Props}
 import akka.pattern.ask
 import akka.util.Timeout
@@ -29,15 +27,15 @@ import akka.actor.{OneForOneStrategy, SupervisorStrategy}
 import de.kp.spark.core.actor._
 import de.kp.spark.core.model._
 
-import de.kp.spark.pref.Configuration
+import de.kp.spark.pref.RequestContext
 import de.kp.spark.pref.model._
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.Future
 
-class PrefMaster(@transient val sc:SparkContext) extends BaseActor {
+class PrefMaster(@transient val ctx:RequestContext) extends BaseActor {
   
-  val (duration,retries,time) = Configuration.actor   
+  val (duration,retries,time) = ctx.config.actor   
 
   override val supervisorStrategy = OneForOneStrategy(maxNrOfRetries=retries,withinTimeRange = DurationInt(duration).minutes) {
     case _ : Exception => SupervisorStrategy.Restart
@@ -91,8 +89,8 @@ class PrefMaster(@transient val sc:SparkContext) extends BaseActor {
     
     worker match {
   
-      case "builder" => context.actorOf(Props(new PrefBuilder(sc)))
-      case "monitor" => context.actorOf(Props(new StatusQuestor(Configuration)))
+      case "builder" => context.actorOf(Props(new PrefBuilder(ctx)))
+      case "monitor" => context.actorOf(Props(new StatusQuestor(ctx.config)))
       
       case _ => null
       

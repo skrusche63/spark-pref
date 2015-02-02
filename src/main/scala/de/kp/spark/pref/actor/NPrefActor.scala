@@ -18,13 +18,12 @@ package de.kp.spark.pref.actor
  * If not, see <http://www.gnu.org/licenses/>.
  */
 
-import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 import de.kp.spark.core.Names
 import de.kp.spark.core.model._
 
-import de.kp.spark.pref.NPrefBuilder
+import de.kp.spark.pref.{NPrefBuilder,RequestContext}
 
 import de.kp.spark.pref.source.TransactionSource
 import de.kp.spark.pref.model._
@@ -34,9 +33,9 @@ import de.kp.spark.pref.model._
  * these describe the relationship between users and items
  * without any contextual information taken into account 
  */
-class NPrefActor(@transient sc:SparkContext) extends BaseActor {
+class NPrefActor(@transient ctx:RequestContext) extends BaseActor {
   
-  private val builder = new NPrefBuilder(sc)
+  private val builder = new NPrefBuilder(ctx)
   def receive = {
 
     case req:ServiceRequest => {
@@ -52,7 +51,7 @@ class NPrefActor(@transient sc:SparkContext) extends BaseActor {
  
         try {
           
-          val source = new TransactionSource(sc)
+          val source = new TransactionSource(ctx)
           val rating = req.data(Names.REQ_RATING)
           
           rating match {

@@ -18,8 +18,6 @@ package de.kp.spark.pref
  * If not, see <http://www.gnu.org/licenses/>.
  */
 
-import org.apache.spark.SparkContext
-
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext._
 
@@ -34,7 +32,7 @@ import de.kp.spark.pref.model._
 import de.kp.spark.pref.format.EventFormatter
 import de.kp.spark.pref.util.EventScoreBuilder
 
-class EPrefBuilder(@transient sc:SparkContext) extends Serializable {
+class EPrefBuilder(@transient ctx:RequestContext) extends Serializable {
 
   def ratingsExplicit(req:ServiceRequest,rawset:RDD[(String,String,String,Int,Double,Long)]) {
     
@@ -84,7 +82,7 @@ class EPrefBuilder(@transient sc:SparkContext) extends Serializable {
      * task and associated model or matrix name
      */
     if (Users.exists(req) == false) {
-      val busers = sc.broadcast(Users)
+      val busers = ctx.sparkContext.broadcast(Users)
       ratings.foreach(x => busers.value.put(req,x._2))
     
     } 
@@ -93,7 +91,7 @@ class EPrefBuilder(@transient sc:SparkContext) extends Serializable {
      * task and associated model or matrix name
      */
     if (Items.exists(req) == false) {
-      val bitems = sc.broadcast(Items)
+      val bitems = ctx.sparkContext.broadcast(Items)
       ratings.foreach(x => bitems.value.put(req,x._3.toString))    
     } 
 
@@ -164,7 +162,7 @@ class EPrefBuilder(@transient sc:SparkContext) extends Serializable {
      * task and associated model or matrix name
      */
     if (Users.exists(req) == false) {
-      val busers = sc.broadcast(Users)
+      val busers = ctx.sparkContext.broadcast(Users)
       ratings.foreach(x => busers.value.put(req,x._2))
     
     } 
@@ -173,7 +171,7 @@ class EPrefBuilder(@transient sc:SparkContext) extends Serializable {
      * task and associated model or matrix name
      */
     if (Items.exists(req) == false) {
-      val bitems = sc.broadcast(Items)
+      val bitems = ctx.sparkContext.broadcast(Items)
       ratings.foreach(x => bitems.value.put(req,x._3.toString))    
     } 
 
@@ -197,7 +195,7 @@ class EPrefBuilder(@transient sc:SparkContext) extends Serializable {
            */          
           val formatted = EventFormatter.format(req,ratings)
           
-          val bratings = sc.broadcast(Ratings)
+          val bratings = ctx.sparkContext.broadcast(Ratings)
           formatted.foreach(record => {
           
             val target = record._1
@@ -220,7 +218,7 @@ class EPrefBuilder(@transient sc:SparkContext) extends Serializable {
       
     } else {
       
-      val bratings = sc.broadcast(Ratings)
+      val bratings = ctx.sparkContext.broadcast(Ratings)
       ratings.foreach(record => {
         
         val (site,user,item,rating,timestamp,event) = record
@@ -240,7 +238,7 @@ class EPrefBuilder(@transient sc:SparkContext) extends Serializable {
      * task and associated model or matrix name
      */
     if (Users.exists(req) == false) {
-      val busers = sc.broadcast(Users)
+      val busers = ctx.sparkContext.broadcast(Users)
       ratings.foreach(x => busers.value.put(req,x._2))
     
     } 
@@ -249,7 +247,7 @@ class EPrefBuilder(@transient sc:SparkContext) extends Serializable {
      * task and associated model or matrix name
      */
     if (Items.exists(req) == false) {
-      val bitems = sc.broadcast(Items)
+      val bitems = ctx.sparkContext.broadcast(Items)
       ratings.foreach(x => bitems.value.put(req,x._3.toString))    
     } 
 
@@ -280,7 +278,7 @@ class EPrefBuilder(@transient sc:SparkContext) extends Serializable {
           })
       
           val store = Configuration.output(0)
-          new ParquetWriter(sc).writeTargetedPoints(store, dataset)
+          new ParquetWriter(ctx.sparkContext).writeTargetedPoints(store, dataset)
           
         }
         
@@ -298,7 +296,7 @@ class EPrefBuilder(@transient sc:SparkContext) extends Serializable {
       })
 
       val store = Configuration.output(0)
-      new ParquetWriter(sc).writeScoredEvents(store, dataset)
+      new ParquetWriter(ctx.sparkContext).writeScoredEvents(store, dataset)
     }
     
   }

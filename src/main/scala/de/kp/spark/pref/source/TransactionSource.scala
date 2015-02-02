@@ -18,7 +18,6 @@ package de.kp.spark.pref.source
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
-import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 import de.kp.spark.core.Names
@@ -26,15 +25,15 @@ import de.kp.spark.core.Names
 import de.kp.spark.core.model._
 import de.kp.spark.core.source._
 
-import de.kp.spark.pref.Configuration
+import de.kp.spark.pref.RequestContext
 import de.kp.spark.pref.model.Sources
 
 import de.kp.spark.pref.spec.Fields
 
-class TransactionSource(@transient sc:SparkContext) {
+class TransactionSource(@transient ctx:RequestContext) {
 
-  private val config = Configuration
-  private val transactionModel = new TransactionModel(sc)
+  private val config = ctx.config
+  private val transactionModel = new TransactionModel(ctx)
   
   def explicitDS(req:ServiceRequest):RDD[(String,String,Int,Double,Long)] = {
     
@@ -43,14 +42,14 @@ class TransactionSource(@transient sc:SparkContext) {
 
       case Sources.ELASTIC => {
         
-        val rawset = new ElasticSource(sc).connect(config,req)
+        val rawset = new ElasticSource(ctx.sparkContext).connect(config,req)
         transactionModel.buildElasticExplicit(req,rawset)
         
       }
 
       case Sources.FILE => {
 
-        val rawset = new FileSource(sc).connect(config.input(1),req)
+        val rawset = new FileSource(ctx.sparkContext).connect(config.input(1),req)
         transactionModel.buildFileExplicit(req,rawset)
         
       }
@@ -59,7 +58,7 @@ class TransactionSource(@transient sc:SparkContext) {
     
         val fields = Fields.get(req).map(kv => kv._2._1).toList    
          
-        val rawset = new JdbcSource(sc).connect(config,req,fields)
+        val rawset = new JdbcSource(ctx.sparkContext).connect(config,req,fields)
         transactionModel.buildJDBCExplicit(req,rawset)
         
       }
@@ -68,7 +67,7 @@ class TransactionSource(@transient sc:SparkContext) {
     
         val fields = Fields.get(req).map(kv => kv._2._1).toList    
          
-        val rawset = new ParquetSource(sc).connect(config.input(1),req,fields)
+        val rawset = new ParquetSource(ctx.sparkContext).connect(config.input(1),req,fields)
         transactionModel.buildParquetExplicit(req,rawset)
         
       }
@@ -86,14 +85,14 @@ class TransactionSource(@transient sc:SparkContext) {
 
       case Sources.ELASTIC => {
         
-        val rawset = new ElasticSource(sc).connect(config,req)
+        val rawset = new ElasticSource(ctx.sparkContext).connect(config,req)
         transactionModel.buildElasticImplicit(req,rawset)
         
       }
 
       case Sources.FILE => {
 
-        val rawset = new FileSource(sc).connect(config.input(1),req)
+        val rawset = new FileSource(ctx.sparkContext).connect(config.input(1),req)
         transactionModel.buildFileImplicit(req,rawset)
         
       }
@@ -102,7 +101,7 @@ class TransactionSource(@transient sc:SparkContext) {
     
         val fields = Fields.get(req).map(kv => kv._2._1).toList    
          
-        val rawset = new JdbcSource(sc).connect(config,req,fields)
+        val rawset = new JdbcSource(ctx.sparkContext).connect(config,req,fields)
         transactionModel.buildJDBCImplicit(req,rawset)
         
       }
@@ -111,7 +110,7 @@ class TransactionSource(@transient sc:SparkContext) {
     
         val fields = Fields.get(req).map(kv => kv._2._1).toList    
          
-        val rawset = new ParquetSource(sc).connect(config.input(1),req,fields)
+        val rawset = new ParquetSource(ctx.sparkContext).connect(config.input(1),req,fields)
         transactionModel.buildParquetImplicit(req,rawset)
         
       }
