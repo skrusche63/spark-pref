@@ -37,6 +37,8 @@ import scala.collection.mutable.Buffer
  */
 class NPrefBuilder(@transient ctx:RequestContext) extends Serializable {
 
+  import ctx.sqlCtx.createSchemaRDD
+
   def ratingsExplicit(req:ServiceRequest,rawset:RDD[(String,String,Int,Double,Long)]) {
 
     val ratings = rawset.map(x => {
@@ -48,9 +50,7 @@ class NPrefBuilder(@transient ctx:RequestContext) extends Serializable {
   
       case Sinks.FILE    => ratingsToFile(req,ratings)
       case Sinks.PARQUET => ratingsToParquet(req,ratings)
-        
-      case Sinks.REDIS => ratingsToRedis(req,ratings)
-      
+       
       case _ => {/* do nothing */}
 
     }
@@ -75,8 +75,6 @@ class NPrefBuilder(@transient ctx:RequestContext) extends Serializable {
   
       case Sinks.FILE    => ratingsToFile(req,ratings)
       case Sinks.PARQUET => ratingsToParquet(req,ratings)
-        
-      case Sinks.REDIS => ratingsToRedis(req,ratings)
       
       case _ => {/* do nothing */}
 
@@ -85,77 +83,24 @@ class NPrefBuilder(@transient ctx:RequestContext) extends Serializable {
   }
 
   private def ratingsToFile(req:ServiceRequest,ratings:RDD[(String,String,Int,Int)]) {
-    /*
-     * Check whether users already exist for the referenced mining or building
-     * task and associated model or matrix name
-     */
-    if (Users.exists(req) == false) {
-      val busers = ctx.sparkContext.broadcast(Users)
-      ratings.foreach(x => busers.value.put(req,x._2))
-    
-    } 
-    /*
-     * Check whether items already exist for the referenced mining or building
-     * task and associated model or matrix name
-     */
-    if (Items.exists(req) == false) {
-      val bitems = ctx.sparkContext.broadcast(Items)
-      ratings.foreach(x => bitems.value.put(req,x._3.toString))    
-    } 
+   
+    val uid = req.data(Names.REQ_UID)
+    val name = req.data(Names.REQ_NAME)
 
-    val path = Configuration.output(1)    
-    ratings.map(x => List(x._1,x._2,x._3.toString,x._4.toString).mkString(",")).saveAsTextFile(path)
-    
-  }
-  
-  private def ratingsToRedis(req:ServiceRequest,ratings:RDD[(String,String,Int,Int)]) {
-    /*
-     * Check whether users already exist for the referenced mining or building
-     * task and associated model or matrix name
-     */
-    if (Users.exists(req) == false) {
-      val busers = ctx.sparkContext.broadcast(Users)
-      ratings.foreach(x => busers.value.put(req,x._2))
-    
-    } 
-    /*
-     * Check whether items already exist for the referenced mining or building
-     * task and associated model or matrix name
-     */
-    if (Items.exists(req) == false) {
-      val bitems = ctx.sparkContext.broadcast(Items)
-      ratings.foreach(x => bitems.value.put(req,x._3.toString))    
-    } 
-
-    val bratings = ctx.sparkContext.broadcast(Ratings)
-    ratings.foreach(x => bratings.value.put(req,List(x._1,x._2,x._3.toString,x._4.toString).mkString(",")))
+    val store = String.format("""%s/%s/%s/1""",ctx.base,name,uid)    
+    ratings.map(x => List(x._1,x._2,x._3.toString,x._4.toString).mkString(",")).saveAsTextFile(store)
     
   }
   
   private def ratingsToParquet(req:ServiceRequest,ratings:RDD[(String,String,Int,Int)]) {
-    /*
-     * Check whether users already exist for the referenced mining or building
-     * task and associated model or matrix name
-     */
-    if (Users.exists(req) == false) {
-      val busers = ctx.sparkContext.broadcast(Users)
-      ratings.foreach(x => busers.value.put(req,x._2))
     
-    } 
-    /*
-     * Check whether items already exist for the referenced mining or building
-     * task and associated model or matrix name
-     */
-    if (Items.exists(req) == false) {
-      val bitems = ctx.sparkContext.broadcast(Items)
-      ratings.foreach(x => bitems.value.put(req,x._3.toString))    
-    } 
+    val uid = req.data(Names.REQ_UID)
+    val name = req.data(Names.REQ_NAME)
 
-    val store = Configuration.output(1)    
-    val dataset = ratings.map(x => ItemScoreObject(x._1,x._2,x._3,x._4))
+    val store = String.format("""%s/%s/%s/1""",ctx.base,name,uid)    
     
-    val writer = new ParquetWriter(ctx.sparkContext)
-    writer.writeScoredItems(store, dataset)
+    val table = ratings.map(x => ItemScoreObject(x._1,x._2,x._3,x._4))
+    table.saveAsParquetFile(store)
     
   }
  
