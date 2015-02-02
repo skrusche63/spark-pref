@@ -74,9 +74,6 @@ class NPrefActor(@transient ctx:RequestContext) extends BaseActor {
           }
 
           cache.addStatus(req,ResponseStatus.RATING_BUILDING_FINISHED)
-    
-          /* Notify potential listeners */
-          notify(req,ResponseStatus.RATING_BUILDING_FINISHED)
           
         } catch {
           case e:Exception => cache.addStatus(req,ResponseStatus.FAILURE)          

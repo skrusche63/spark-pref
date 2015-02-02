@@ -71,12 +71,8 @@ class EPrefActor(@transient ctx:RequestContext) extends BaseActor {
             
             case _ => throw new Exception("This rating type is not supported.")
           }
-          
-
+ 
           cache.addStatus(req,ResponseStatus.RATING_BUILDING_FINISHED)
-    
-          /* Notify potential listeners */
-          notify(req,ResponseStatus.RATING_BUILDING_FINISHED)
           
         } catch {
           case e:Exception => cache.addStatus(req,ResponseStatus.FAILURE)          

@@ -23,7 +23,7 @@ import akka.actor.{Actor,ActorLogging}
 import de.kp.spark.core.model._
 import de.kp.spark.core.redis.RedisCache
 
-import de.kp.spark.pref.{Configuration,RemoteContext}
+import de.kp.spark.pref.Configuration
 import de.kp.spark.pref.model._
 
 abstract class BaseActor extends Actor with ActorLogging {
@@ -42,20 +42,6 @@ abstract class BaseActor extends Actor with ActorLogging {
       new ServiceResponse(req.service,req.task,data,ResponseStatus.FAILURE)	
     
     }
-    
-  }
-
-  /**
-   * Notify all registered listeners about a certain status
-   */
-  protected def notify(req:ServiceRequest,status:String) {
-
-    /* Build message */
-    val response = new ServiceResponse(req.service,req.task,req.data,status)	
-    
-    /* Notify listeners */
-    val message = Serializer.serializeResponse(response)    
-    RemoteContext.notify(message)
     
   }
   

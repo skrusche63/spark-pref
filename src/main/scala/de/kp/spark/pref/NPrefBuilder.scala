@@ -21,11 +21,8 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext._
 
 import de.kp.spark.core.Names
-
 import de.kp.spark.core.model._
-import de.kp.spark.core.io.ParquetWriter
 
-import de.kp.spark.pref.format.{Items,Users,Ratings}
 import de.kp.spark.pref.model._
 
 import scala.collection.mutable.Buffer
@@ -46,14 +43,7 @@ class NPrefBuilder(@transient ctx:RequestContext) extends Serializable {
       (site,user,item,score.toInt)
     })
     
-    req.data(Names.REQ_SINK) match {
-  
-      case Sinks.FILE    => ratingsToFile(req,ratings)
-      case Sinks.PARQUET => ratingsToParquet(req,ratings)
-       
-      case _ => {/* do nothing */}
-
-    }
+    ratingsToParquet(req,ratings)
   
   }
   
@@ -71,24 +61,7 @@ class NPrefBuilder(@transient ctx:RequestContext) extends Serializable {
   def ratingsImplicit(req:ServiceRequest,rawset:RDD[(String,String,List[(Long,List[Int])])]) {
     
     val ratings = buildRatings(rawset)
-    req.data(Names.REQ_SINK) match {
-  
-      case Sinks.FILE    => ratingsToFile(req,ratings)
-      case Sinks.PARQUET => ratingsToParquet(req,ratings)
-      
-      case _ => {/* do nothing */}
-
-    }
-    
-  }
-
-  private def ratingsToFile(req:ServiceRequest,ratings:RDD[(String,String,Int,Int)]) {
-   
-    val uid = req.data(Names.REQ_UID)
-    val name = req.data(Names.REQ_NAME)
-
-    val store = String.format("""%s/%s/%s/1""",ctx.base,name,uid)    
-    ratings.map(x => List(x._1,x._2,x._3.toString,x._4.toString).mkString(",")).saveAsTextFile(store)
+    ratingsToParquet(req,ratings)
     
   }
   
