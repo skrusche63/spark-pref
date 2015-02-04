@@ -84,16 +84,4 @@ object Sinks {
   
 }
 
-object Sources {
-
-  val FILE:String    = "FILE"
-  val ELASTIC:String = "ELASTIC" 
-  val JDBC:String    = "JDBC"    
-  val PARQUET:String = "PARQUET"    
-  
-  private val sources = List(FILE,ELASTIC,JDBC,PARQUET)
-  def isSource(source:String):Boolean = sources.contains(source)
-  
-}
-
 object Serializer extends BaseSerializer

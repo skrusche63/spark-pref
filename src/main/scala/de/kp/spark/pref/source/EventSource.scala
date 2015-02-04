@@ -26,8 +26,6 @@ import de.kp.spark.core.model._
 import de.kp.spark.core.source._
 
 import de.kp.spark.pref.RequestContext
-import de.kp.spark.pref.model.Sources
-
 import de.kp.spark.pref.spec.Fields
 
 class EventSource(@transient ctx:RequestContext) {
